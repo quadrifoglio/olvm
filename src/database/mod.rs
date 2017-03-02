@@ -3,6 +3,7 @@
  */
 
 pub mod image;
+pub mod vm;
 
 use std::error::Error as StdError;
 

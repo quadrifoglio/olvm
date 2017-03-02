@@ -3,6 +3,7 @@ extern crate mysql;
 
 mod error;
 mod parser;
+mod backend;
 mod database;
 mod handler;
 

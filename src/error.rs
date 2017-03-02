@@ -43,6 +43,7 @@ impl fmt::Debug for Error {
 
 impl std::convert::From<mysql::Error> for Error {
     fn from(e: mysql::Error) -> Error {
+        println!("{}", e);
         Error::new(format!("Database error: {}", e.description()))
     }
 }

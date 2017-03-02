@@ -73,7 +73,7 @@ pub fn update(db: &mut PooledConn, p: Parameters) -> Result<()> {
 }
 
 /*
- * Handle a 'updateimg' command
+ * Handle a 'delimg' command
  */
 pub fn delete(db: &mut PooledConn, p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
