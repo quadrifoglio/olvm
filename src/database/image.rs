@@ -19,6 +19,20 @@ pub struct Image {
 }
 
 /*
+ * Create a new image in database and return it's ID
+ */
+pub fn create(db: &mut PooledConn, name: &str, file: &str) -> Result<i32> {
+    let sql = "INSERT INTO image (ref_node, name, file) VALUES (:a, :b, :c)";
+    let stmt = try!(db.prep_exec(sql, params! {
+        "a" => 1,
+        "b" => name,
+        "c" => file
+    }));
+
+    Ok(stmt.last_insert_id() as i32)
+}
+
+/*
  * List all the images in the database
  */
 pub fn list(db: &mut PooledConn) -> Result<Vec<Image>> {
