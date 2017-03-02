@@ -1,50 +1,20 @@
-use std::result::Result as StdResult;
-use std::vec::Vec;
+use std::collections::HashMap;
 
-use error::Error;
-
-/*
- * Define a Result type for the parser
- */
-pub type Result<T> = StdResult<T, Error>;
+use error::{Result, Error};
 
 /*
- * Parameter represents a key-value pair
+ * Parameters are a list of key/value pairs
  */
-pub struct Parameter {
-    pub key: String,
-    pub value: String
-}
-
-impl Parameter {
-    /*
-     * Parse a parameter from a string
-     * First is the key, then is an unknown number of whitespaces, and then the value
-     */
-    pub fn from_str<S: Into<String>>(s: S) -> Result<Parameter> {
-        // Split the string by whitespaces
-        let s = s.into().trim().to_string();
-        let mut subs = s.split_whitespace();
-
-        // Key first, then value
-        let key = try!(subs.next().ok_or(Error::new("Key not found")));
-        let value = try!(subs.next().ok_or(Error::new("Value not found")));
-
-        Ok(Parameter {
-            key: key.to_string(),
-            value: value.to_string()
-        })
-    }
-}
+pub type Parameters = HashMap<String, String>;
 
 /*
  * A command is an order adressed to the program to perform an action.
  * It starts by a command name, such as 'createvm' or 'deleteimg' and if followed by
- * a list of parameters
+ * a list of key/value parameters
  */
 pub struct Command {
     pub name: String,
-    pub parameters: Vec<Parameter>
+    pub parameters: Parameters
 }
 
 impl Command {
@@ -59,7 +29,7 @@ impl Command {
         }
 
         let name: String;
-        let mut parameters = Vec::new();
+        let mut parameters = HashMap::new();
 
         // If the command has parameters
         if s.contains(", ") {
@@ -71,7 +41,15 @@ impl Command {
 
             // Parse parameters
             for param in subs {
-                parameters.push(try!(Parameter::from_str(param)));
+                // Split the string by whitespaces
+                let s = param.trim().to_string();
+                let mut subs = s.split_whitespace();
+
+                // Key first, then value
+                let key = try!(subs.next().ok_or(Error::new("Key not found")));
+                let value = try!(subs.next().ok_or(Error::new("Value not found")));
+
+                parameters.insert(key.to_string(), value.to_string());
             }
         }
         else {

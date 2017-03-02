@@ -1,39 +1,6 @@
 use super::{Parameter, Command};
 
 /*
- * Parameter
- */
-#[test]
-fn parameter_from_str_valid() {
-    let p = Parameter::from_str("key1 value1").unwrap();
-
-    assert_eq!(p.key.as_str(), "key1");
-    assert_eq!(p.value.as_str(), "value1");
-
-    let p = Parameter::from_str("key2  value2").unwrap();
-
-    assert_eq!(p.key.as_str(), "key2");
-    assert_eq!(p.value.as_str(), "value2");
-
-    let p = Parameter::from_str("key3\tvalue3").unwrap();
-
-    assert_eq!(p.key.as_str(), "key3");
-    assert_eq!(p.value.as_str(), "value3");
-
-    let p = Parameter::from_str("key4\t \t value4").unwrap();
-
-    assert_eq!(p.key.as_str(), "key4");
-    assert_eq!(p.value.as_str(), "value4");
-}
-
-#[test]
-#[should_panic]
-fn parameter_from_str_invalid() {
-    Parameter::from_str("key1").unwrap();
-    Parameter::from_str("key2\nvalue2").unwrap();
-}
-
-/*
  * Command
  */
 #[test]

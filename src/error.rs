@@ -1,5 +1,5 @@
-use std::fmt::{Display, Debug, Formatter, Result};
-use std::error::Error as StdError;
+use std::{self};
+use std::fmt::{self};
 
 /*
  * Error type
@@ -16,24 +16,30 @@ impl Error {
     }
 }
 
-impl StdError for Error {
+impl std::error::Error for Error {
     fn description(&self) -> &str {
         self.message.as_str()
     }
 
-    fn cause(&self) -> Option<&StdError> {
+    fn cause(&self) -> Option<&std::error::Error> {
         None
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Error: {}", self.message)
     }
 }
 
-impl Debug for Error {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Error: {}", self.message)
     }
 }
+
+
+/*
+ * Define a Result type using our Error type
+ */
+pub type Result<T> = std::result::Result<T, Error>;

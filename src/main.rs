@@ -1,8 +1,10 @@
 mod error;
 mod parser;
+mod handler;
 
 use std::io::{self, BufReader, BufRead, Write};
 use parser::{Command};
+use handler::handle;
 
 fn prompt() {
     print!("> ");
@@ -15,11 +17,21 @@ fn command(line: String) {
         return;
     }
 
-    let c = Command::from_str(line).unwrap();
-    println!("Name: {}", c.name);
+    let c = match Command::from_str(line) {
+        Ok(c) => c,
+        Err(e) => {
+            println!("{}", e);
+            prompt();
 
-    for param in c.parameters {
-        println!("Parameter: {} => {}", param.key, param.value);
+            return;
+        }
+    };
+
+    if let Err(e) = handle(c) {
+        println!("{}", e);
+        prompt();
+
+        return;
     }
 
     prompt();
