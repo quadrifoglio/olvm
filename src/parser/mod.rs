@@ -21,9 +21,9 @@ impl Parameter {
      * Parse a parameter from a string
      * First is the key, then is an unknown number of whitespaces, and then the value
      */
-    pub fn from_str(s: &str) -> Result<Parameter> {
+    pub fn from_str<S: Into<String>>(s: S) -> Result<Parameter> {
         // Split the string by whitespaces
-        let s = s.trim().to_string();
+        let s = s.into().trim().to_string();
         let mut subs = s.split_whitespace();
 
         // Key first, then value
@@ -42,9 +42,9 @@ impl Parameter {
  * It starts by a command name, such as 'createvm' or 'deleteimg' and if followed by
  * a list of parameters
  */
-struct Command {
-    name: String,
-    parameters: Vec<Parameter>
+pub struct Command {
+    pub name: String,
+    pub parameters: Vec<Parameter>
 }
 
 impl Command {
@@ -52,8 +52,8 @@ impl Command {
      * Parse a command from a string
      * Valid syntax: <command name> [[, [name] [value]]...]
      */
-    fn from_str(s: &str) -> Result<Command> {
-        let s = s.trim().to_string();
+    pub fn from_str<S: Into<String>>(s: S) -> Result<Command> {
+        let s = s.into().trim().to_string();
         if s.len() == 0 {
             return Err(Error::new("Empty command"));
         }
