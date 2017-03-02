@@ -2,6 +2,8 @@
  * Database - Interaction with the data storage system
  */
 
+pub mod image;
+
 use std::error::Error as StdError;
 
 use error::{Error, Result};

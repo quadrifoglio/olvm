@@ -1,5 +1,8 @@
 use std::{self};
+use std::error::Error as StdError;
 use std::fmt::{self};
+
+use mysql::{self};
 
 /*
  * Error type
@@ -35,6 +38,12 @@ impl fmt::Display for Error {
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Error: {}", self.message)
+    }
+}
+
+impl std::convert::From<mysql::Error> for Error {
+    fn from(e: mysql::Error) -> Error {
+        Error::new(format!("Database error: {}", e.description()))
     }
 }
 

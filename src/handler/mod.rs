@@ -12,6 +12,7 @@ use parser::Command;
 pub fn handle(db: &mut PooledConn, c: Command) -> Result<()> {
     match c.name.as_str() {
         "createimg" => return image::create(db, c.parameters),
+        "listimg" => return image::list(db),
         _ => return Err(Error::new("Unknown command"))
     }
 }
