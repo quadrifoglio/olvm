@@ -3,6 +3,7 @@
  */
 
 use std::vec::Vec;
+use std::collections::HashMap;
 
 use mysql::PooledConn;
 
@@ -22,16 +23,35 @@ pub struct VM {
 /*
  * Create a new vm in database and return its ID
  */
-pub fn create(db: &mut PooledConn, backend: i32, image: i32, name: &str) -> Result<i32> {
-    let sql = "INSERT INTO vm (ref_node, ref_backend, ref_img, name) VALUES (:a, :b, :c, :d)";
-    let stmt = try!(db.prep_exec(sql, params! {
-        "a" => 1,
-        "b" => backend,
-        "c" => image,
-        "d" => name
-    }));
+pub fn create(db: &mut PooledConn, backend: i32, image: i32, name: &str, p: HashMap<String, String>) -> Result<i32> {
+    let id: i32;
+    {
+        let sql = "INSERT INTO vm (ref_node, ref_backend, ref_img, name) VALUES (:a, :b, :c, :d)";
+        let stmt = try!(db.prep_exec(sql, params! {
+            "a" => 1,
+            "b" => backend,
+            "c" => image,
+            "d" => name
+        }));
 
-    Ok(stmt.last_insert_id() as i32)
+        id = stmt.last_insert_id() as i32;
+    }
+
+    for (key, val) in p {
+        // Ignore the required parameters stored in the main table
+        if key.as_str() == "backend" || key.as_str() == "image" || key.as_str() == "name" {
+            continue;
+        }
+
+        let sql = "INSERT INTO vm_param VALUES (:a, :b, :c)";
+        try!(db.prep_exec(sql, params! {
+            "a" => id,
+            "b" => key,
+            "c" => val
+        }));
+    }
+
+    Ok(id)
 }
 
 /*
