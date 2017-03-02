@@ -1,8 +1,14 @@
+extern crate mysql;
+
 mod error;
 mod parser;
+mod database;
 mod handler;
 
 use std::io::{self, BufReader, BufRead, Write};
+
+use mysql::PooledConn;
+
 use parser::{Command};
 use handler::handle;
 
@@ -11,7 +17,7 @@ fn prompt() {
     io::stdout().flush().ok().expect("Could not flush stdout");
 }
 
-fn command(line: String) {
+fn command(db: &mut PooledConn, line: String) {
     if line.len() == 0 {
         prompt();
         return;
@@ -27,7 +33,7 @@ fn command(line: String) {
         }
     };
 
-    if let Err(e) = handle(c) {
+    if let Err(e) = handle(db, c) {
         println!("{}", e);
         prompt();
 
@@ -38,6 +44,22 @@ fn command(line: String) {
 }
 
 fn main() {
+    let pool = match database::open("root", "", "127.0.0.1", "olvm") {
+        Ok(pool) => pool,
+        Err(e) => {
+            println!("Failed to connect to database: {}", e);
+            return;
+        }
+    };
+
+    let mut db = match pool.get_conn() {
+        Ok(db) => db,
+        Err(e) => {
+            println!("Failed to get database connection: {}", e);
+            return;
+        }
+    };
+
     prompt();
 
     let r = BufReader::new(io::stdin());
@@ -50,6 +72,6 @@ fn main() {
             }
         };
 
-        command(line);
+        command(&mut db, line);
     }
 }
