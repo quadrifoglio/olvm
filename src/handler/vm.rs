@@ -3,19 +3,29 @@ use mysql::PooledConn;
 use error::{Result, Error};
 use parser::Parameters;
 use database::{self};
+use database::vm::VM;
 use backend::{self};
 
 /*
- * Handle a 'createvm' command
+ * Validates the user-specified parameters for VM creation
  */
-pub fn create(db: &mut PooledConn, p: Parameters) -> Result<()> {
+fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
     let backend = try!(p.get("backend").ok_or(Error::new("A 'backend' parameter is required")));
     let image = p.get("image");
-    let image_id: i32;
     let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
 
-    // Get the backend's ID
-    let backend = try!(backend::from_str(backend));
+    let mut vm = VM {
+        id: 0,
+        node: 1, // TODO: Handle node id
+        backend: try!(backend::from_str(backend)),
+        image: 0,
+        name: name.to_string(),
+        parameters: p.clone()
+    };
+
+    // Remove required prameters
+    vm.parameters.remove("backend");
+    vm.parameters.remove("name");
 
     if let Some(img) = image {
         // Parse the image ID and retreive it from the database
@@ -24,14 +34,22 @@ pub fn create(db: &mut PooledConn, p: Parameters) -> Result<()> {
             Err(_) => return Err(Error::new("The 'image' parameter must be an intger"))
         };
 
-        image_id = image.id;
-    }
-    else {
-        image_id = 0;
+        vm.image = image.id;
+        vm.parameters.remove("image");
     }
 
+    Ok(vm)
+}
+
+/*
+ * Handle a 'createvm' command
+ */
+pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
+    // Validate and retreive VM info from the client-specified parameters
+    let vm = try!(validate(db, &mut p));
+
     // Create the image
-    let id = try!(database::vm::create(db, backend, image_id, name));
+    let id = try!(database::vm::create(db, vm));
     println!("id {}", id);
 
     Ok(())
