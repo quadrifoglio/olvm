@@ -1,7 +1,5 @@
 use mysql::PooledConn;
 
-use std::collections::HashMap;
-
 use error::{Result, Error};
 use parser::Parameters;
 use database::{self};
@@ -14,13 +12,8 @@ fn validate(p: &mut Parameters) -> Result<Image> {
     let name = p.get("name");
     let file = p.get("file");
 
-    let mut img = Image {
-        id: 0,
-        node: 1, // TODO: Handle node
-        name: String::new(),
-        file: String::new(),
-        parameters: HashMap::new()
-    };
+    let mut img = Image::new();
+    img.parameters = p.clone();
 
     // Check name
     if let Some(name) = name {

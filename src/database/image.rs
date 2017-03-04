@@ -20,6 +20,18 @@ pub struct Image {
     pub parameters: HashMap<String, String>
 }
 
+impl Image {
+    pub fn new() -> Image {
+        Image {
+            id: 0,
+            node: 1, // TODO: Handle node
+            name: String::new(),
+            file: String::new(),
+            parameters: HashMap::new()
+        }
+    }
+}
+
 /*
  * Create a new image in database and return its ID
  */

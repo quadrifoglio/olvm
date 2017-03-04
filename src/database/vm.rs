@@ -21,6 +21,19 @@ pub struct VM {
     pub parameters: HashMap<String, String>
 }
 
+impl VM {
+    pub fn new() -> VM {
+        VM {
+            id: 0,
+            node: 1, // TODO: Handle node
+            backend: 0,
+            image: 0,
+            name: String::new(),
+            parameters: HashMap::new()
+        }
+    }
+}
+
 /*
  * Create a new vm in database and return its ID
  */

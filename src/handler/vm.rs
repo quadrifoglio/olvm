@@ -14,14 +14,8 @@ fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
     let image = p.get("image");
     let name = p.get("name");
 
-    let mut vm = VM {
-        id: 0,
-        node: 1, // TODO: Handle node id
-        backend: 0,
-        image: 0,
-        name: String::new(),
-        parameters: p.clone()
-    };
+    let mut vm = VM::new();
+    vm.parameters = p.clone();
 
     // Check backend
     if let Some(backend) = backend {
