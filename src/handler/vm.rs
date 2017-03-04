@@ -10,23 +10,26 @@ use backend::{self};
  * Validates the user-specified parameters for VM creation
  */
 fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
-    let backend = try!(p.get("backend").ok_or(Error::new("A 'backend' parameter is required")));
+    let backend = p.get("backend");
     let image = p.get("image");
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+    let name = p.get("name");
 
     let mut vm = VM {
         id: 0,
         node: 1, // TODO: Handle node id
-        backend: try!(backend::from_str(backend)),
+        backend: 0,
         image: 0,
-        name: name.to_string(),
+        name: String::new(),
         parameters: p.clone()
     };
 
-    // Remove required prameters
-    vm.parameters.remove("backend");
-    vm.parameters.remove("name");
+    // Check backend
+    if let Some(backend) = backend {
+        vm.backend = try!(backend::from_str(backend));
+        vm.parameters.remove("backend");
+    }
 
+    // Check image
     if let Some(img) = image {
         // Parse the image ID and retreive it from the database
         let image = match img.parse::<i32>() {
@@ -38,6 +41,12 @@ fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
         vm.parameters.remove("image");
     }
 
+    // Check name
+    if let Some(name) = name {
+        vm.name = name.clone();
+        vm.parameters.remove("name");
+    }
+
     Ok(vm)
 }
 
@@ -47,6 +56,14 @@ fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
 pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
     // Validate and retreive VM info from the client-specified parameters
     let vm = try!(validate(db, &mut p));
+
+    // Check required parameters
+    if vm.backend == 0 {
+        return Err(Error::new("A 'backend' parameter is required"));
+    }
+    if vm.name.len() == 0 {
+        return Err(Error::new("A 'name' parameter is required"));
+    }
 
     // Create the image
     let id = try!(database::vm::create(db, vm));
