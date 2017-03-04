@@ -117,6 +117,18 @@ pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
     };
 
     let vm = try!(validate(db, &mut p));
+
+    // Check parameters to provide error messages
+    if vm.id != 0 {
+        return Err(Error::new("The 'id' parameter can not be changed"));
+    }
+    if vm.backend != 0 {
+        return Err(Error::new("The 'backend' parameter can not be changed"));
+    }
+    if vm.image != 0 {
+        return Err(Error::new("The 'image' parameter can not be changed"));
+    }
+
     try!(database::vm::update(db, id, vm));
 
     Ok(())

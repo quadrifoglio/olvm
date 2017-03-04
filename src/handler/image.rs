@@ -44,6 +44,14 @@ fn validate(p: &mut Parameters) -> Result<Image> {
 pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
     let img = try!(validate(&mut p));
 
+    // Check required parameters
+    if img.name.len() == 0 {
+        return Err(Error::new("A 'name' parameter is required"));
+    }
+    if img.file.len() == 0 {
+        return Err(Error::new("A 'file' parameter is required"));
+    }
+
     let id = try!(database::image::create(db, img));
     println!("id {}", id);
 
