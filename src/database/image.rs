@@ -141,12 +141,12 @@ pub fn get(db: &mut PooledConn, id: i32) -> Result<Image> {
 /*
  * Update an image in the database
  */
-pub fn update(db: &mut PooledConn, id: i32, name: &str, file: &str) -> Result<()> {
+pub fn update(db: &mut PooledConn, id: i32, img: Image) -> Result<()> {
     let sql = "UPDATE image SET name = :a, file = :b WHERE id = :c";
 
     try!(db.prep_exec(sql, params! {
-        "a" => name,
-        "b" => file,
+        "a" => img.name,
+        "b" => img.file,
         "c" => id
     }));
 

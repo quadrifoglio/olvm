@@ -149,11 +149,11 @@ pub fn get(db: &mut PooledConn, id: i32) -> Result<VM> {
 /*
  * Update an vm in the database
  */
-pub fn update(db: &mut PooledConn, id: i32, name: &str) -> Result<()> {
+pub fn update(db: &mut PooledConn, id: i32, vm: VM) -> Result<()> {
     let sql = "UPDATE vm SET name = :a WHERE id = :b";
 
     try!(db.prep_exec(sql, params! {
-        "a" => name,
+        "a" => vm.name,
         "b" => id,
     }));
 

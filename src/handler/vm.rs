@@ -10,12 +10,20 @@ use backend::{self};
  * Validates the user-specified parameters for VM creation
  */
 fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
+    let id = p.get("id");
     let backend = p.get("backend");
     let image = p.get("image");
     let name = p.get("name");
 
     let mut vm = VM::new();
     vm.parameters = p.clone();
+
+    // Remove 'id' parameter if any
+    // This occurs when an update request is performed
+    // The 'id' parameter should not be used as an optional parameter
+    if let Some(_) = id {
+        vm.parameters.remove("id");
+    }
 
     // Check backend
     if let Some(backend) = backend {
@@ -101,21 +109,15 @@ pub fn get(db: &mut PooledConn, p: Parameters) -> Result<()> {
 /*
  * Handle a 'updatevm' command
  */
-pub fn update(db: &mut PooledConn, p: Parameters) -> Result<()> {
+pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,
         Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
     };
 
-    let name = p.get("name");
-    let mut vm = try!(database::vm::get(db, id));
-
-    if let Some(name) = name {
-        vm.name = name.clone()
-    }
-
-    try!(database::vm::update(db, id, vm.name.as_str()));
+    let vm = try!(validate(db, &mut p));
+    try!(database::vm::update(db, id, vm));
 
     Ok(())
 }
