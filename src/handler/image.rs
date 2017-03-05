@@ -1,9 +1,9 @@
-use mysql::PooledConn;
-
 use error::{Result, Error};
 use parser::Parameters;
 use database::{self};
 use database::image::Image;
+
+use mongodb::db::Database;
 
 /*
  * Validates the user-specified parameters for image creation/update
@@ -41,7 +41,7 @@ fn validate(p: &mut Parameters) -> Result<Image> {
 /*
  * Handle a 'createimg' command
  */
-pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
+pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
     let img = try!(validate(&mut p));
 
     // Check required parameters
@@ -61,7 +61,7 @@ pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'listimg' command
  */
-pub fn list(db: &mut PooledConn) -> Result<()> {
+pub fn list(db: &Database) -> Result<()> {
     let imgs = try!(database::image::list(db));
 
     for img in imgs {
@@ -74,7 +74,7 @@ pub fn list(db: &mut PooledConn) -> Result<()> {
 /*
  * Handle a 'getimg' command
  */
-pub fn get(db: &mut PooledConn, p: Parameters) -> Result<()> {
+pub fn get(db: &Database, p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,
@@ -90,15 +90,17 @@ pub fn get(db: &mut PooledConn, p: Parameters) -> Result<()> {
 /*
  * Handle a 'updateimg' command
  */
-pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
+pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,
         Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
     };
 
-    let img = try!(validate(&mut p));
-    try!(database::image::update(db, id, img));
+    let mut img = try!(validate(&mut p));
+    img.id = id;
+
+    try!(database::image::update(db, img));
 
     Ok(())
 }
@@ -106,7 +108,7 @@ pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'delimg' command
  */
-pub fn delete(db: &mut PooledConn, p: Parameters) -> Result<()> {
+pub fn delete(db: &Database, p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,

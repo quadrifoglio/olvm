@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate mysql;
+extern crate mongodb;
 
 mod error;
 mod parser;
@@ -9,7 +9,7 @@ mod handler;
 
 use std::io::{self, BufReader, BufRead, Write};
 
-use mysql::PooledConn;
+use mongodb::db::Database;
 
 use parser::{Command};
 use handler::handle;
@@ -19,7 +19,7 @@ fn prompt() {
     io::stdout().flush().ok().expect("Could not flush stdout");
 }
 
-fn command(db: &mut PooledConn, line: String) {
+fn command(db: &Database, line: String) {
     if line.len() == 0 {
         prompt();
         return;
@@ -46,18 +46,10 @@ fn command(db: &mut PooledConn, line: String) {
 }
 
 fn main() {
-    let pool = match database::open("root", "", "127.0.0.1", "olvm") {
-        Ok(pool) => pool,
-        Err(e) => {
-            println!("Failed to connect to database: {}", e);
-            return;
-        }
-    };
-
-    let mut db = match pool.get_conn() {
+    let db = match database::open("127.0.0.1", 27017) {
         Ok(db) => db,
         Err(e) => {
-            println!("Failed to get database connection: {}", e);
+            println!("Failed to connect to database: {}", e);
             return;
         }
     };
@@ -74,6 +66,6 @@ fn main() {
             }
         };
 
-        command(&mut db, line);
+        command(&db, line);
     }
 }

@@ -5,20 +5,16 @@
 pub mod image;
 pub mod vm;
 
-use std::error::Error as StdError;
+use mongodb::Client;
+use mongodb::db::Database;
+use mongodb::ThreadedClient;
 
 use error::{Error, Result};
 
-use mysql::{Pool};
-
 /*
- * Open a connection pool to the database
+ * Open a connection to the database
  */
-pub fn open(user: &str, pass: &str, host: &str, name: &str) -> Result<Pool> {
-    match Pool::new(format!("mysql://{}:{}@{}/{}", user, pass, host, name).as_str()) {
-        Ok(db) => Ok(db),
-        Err(e) => {
-            return Err(Error::new(e.description()));
-        }
-    }
+pub fn open(host: &str, port: u16) -> Result<Database> {
+    let c = try!(Client::connect(host, port));
+    Ok(c.db("olvm"))
 }

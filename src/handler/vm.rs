@@ -1,15 +1,15 @@
-use mysql::PooledConn;
-
 use error::{Result, Error};
 use parser::Parameters;
 use database::{self};
 use database::vm::VM;
 use backend::{self};
 
+use mongodb::db::Database;
+
 /*
  * Validates the user-specified parameters for VM creation
  */
-fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
+fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
     let id = p.get("id");
     let backend = p.get("backend");
     let image = p.get("image");
@@ -55,7 +55,7 @@ fn validate(db: &mut PooledConn, p: &mut Parameters) -> Result<VM> {
 /*
  * Handle a 'createvm' command
  */
-pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
+pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
     // Validate and retreive VM info from the client-specified parameters
     let vm = try!(validate(db, &mut p));
 
@@ -77,7 +77,7 @@ pub fn create(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'listvm' command
  */
-pub fn list(db: &mut PooledConn) -> Result<()> {
+pub fn list(db: &Database) -> Result<()> {
     let vms = try!(database::vm::list(db));
 
     for vm in vms {
@@ -91,7 +91,7 @@ pub fn list(db: &mut PooledConn) -> Result<()> {
 /*
  * Handle a 'getvm' command
  */
-pub fn get(db: &mut PooledConn, p: Parameters) -> Result<()> {
+pub fn get(db: &Database, p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,
@@ -109,19 +109,17 @@ pub fn get(db: &mut PooledConn, p: Parameters) -> Result<()> {
 /*
  * Handle a 'updatevm' command
  */
-pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
+pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,
         Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
     };
 
-    let vm = try!(validate(db, &mut p));
+    let mut vm = try!(validate(db, &mut p));
+    vm.id = id;
 
     // Check parameters to provide error messages
-    if vm.id != 0 {
-        return Err(Error::new("The 'id' parameter can not be changed"));
-    }
     if vm.backend != 0 {
         return Err(Error::new("The 'backend' parameter can not be changed"));
     }
@@ -129,7 +127,7 @@ pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
         return Err(Error::new("The 'image' parameter can not be changed"));
     }
 
-    try!(database::vm::update(db, id, vm));
+    try!(database::vm::update(db, vm));
 
     Ok(())
 }
@@ -137,7 +135,7 @@ pub fn update(db: &mut PooledConn, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'delvm' command
  */
-pub fn delete(db: &mut PooledConn, p: Parameters) -> Result<()> {
+pub fn delete(db: &Database, p: Parameters) -> Result<()> {
     let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
     let id = match id.parse::<i32>() {
         Ok(id) => id,

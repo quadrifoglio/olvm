@@ -2,7 +2,7 @@ use std::{self};
 use std::error::Error as StdError;
 use std::fmt::{self};
 
-use mysql::{self};
+use mongodb::{self};
 
 /*
  * Error type
@@ -41,13 +41,11 @@ impl fmt::Debug for Error {
     }
 }
 
-impl std::convert::From<mysql::Error> for Error {
-    fn from(e: mysql::Error) -> Error {
-        println!("{}", e);
+impl std::convert::From<mongodb::Error> for Error {
+    fn from(e: mongodb::Error) -> Error {
         Error::new(format!("Database error: {}", e.description()))
     }
 }
-
 
 /*
  * Define a Result type using our Error type

@@ -5,12 +5,12 @@
 mod image;
 mod vm;
 
-use mysql::PooledConn;
+use mongodb::db::Database;
 
 use error::{Result, Error};
 use parser::Command;
 
-pub fn handle(db: &mut PooledConn, c: Command) -> Result<()> {
+pub fn handle(db: &Database, c: Command) -> Result<()> {
     match c.name.as_str() {
         "createimg" => return image::create(db, c.parameters),
         "listimg" => return image::list(db),
