@@ -17,6 +17,8 @@ fn default_node() -> i32 {
 pub struct Image {
     pub name: String,
 
+    pub backend: String,
+
     #[serde(default = "default_node")]
     pub node: i32,
 

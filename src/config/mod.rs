@@ -67,6 +67,15 @@ pub struct Config {
     pub backend: Backend
 }
 
+impl Config {
+    pub fn has_backend(&self, backend: &str) -> bool {
+        match backend {
+            "kvm" => self.backend.kvm.is_some(),
+            _ => false
+        }
+    }
+}
+
 pub fn open(path: &str) -> Result<Config> {
     let mut data = String::new();
 
