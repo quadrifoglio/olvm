@@ -9,7 +9,7 @@ use mongodb::Client;
 use mongodb::db::Database;
 use mongodb::ThreadedClient;
 
-use error::Result;
+use common::Result;
 
 /*
  * Open a connection to the database

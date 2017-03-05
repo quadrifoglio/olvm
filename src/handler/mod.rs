@@ -7,7 +7,7 @@ mod vm;
 
 use mongodb::db::Database;
 
-use error::{Result, Error};
+use common::{Result, Error};
 use parser::Command;
 
 pub fn handle(db: &Database, c: Command) -> Result<()> {

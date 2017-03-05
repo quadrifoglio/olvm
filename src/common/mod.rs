@@ -1,3 +1,5 @@
+pub mod structs;
+
 use std::{self};
 use std::error::Error as StdError;
 use std::fmt::{self};

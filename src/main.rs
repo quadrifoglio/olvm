@@ -5,7 +5,7 @@ extern crate serde_derive;
 extern crate bson;
 extern crate mongodb;
 
-mod error;
+mod common;
 mod parser;
 mod database;
 mod handler;

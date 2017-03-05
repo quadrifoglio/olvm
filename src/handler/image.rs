@@ -1,9 +1,9 @@
-use error::{Result, Error};
+use mongodb::db::Database;
+
+use common::{Result, Error};
+use common::structs::Image;
 use parser::Parameters;
 use database::{self};
-use database::image::Image;
-
-use mongodb::db::Database;
 
 /*
  * Validates the user-specified parameters for image creation/update

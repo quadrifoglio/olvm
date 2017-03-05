@@ -1,9 +1,9 @@
-use error::{Result, Error};
+use mongodb::db::Database;
+
+use common::{Result, Error};
+use common::structs::VM;
 use parser::Parameters;
 use database::{self};
-use database::vm::VM;
-
-use mongodb::db::Database;
 
 /*
  * Validates the user-specified parameters for VM creation

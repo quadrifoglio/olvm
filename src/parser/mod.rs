@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use error::{Result, Error};
+use common::{Result, Error};
 
 /*
  * Parameters are a list of key/value pairs

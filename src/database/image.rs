@@ -3,51 +3,12 @@
  */
 
 use std::vec::Vec;
-use std::collections::HashMap;
-use std::error::Error as StdError;
 
-use bson::{self, Document, Bson};
+use bson::Document;
 use mongodb::db::{Database, ThreadedDatabase};
 
-use error::{Result, Error};
-
-/*
- * Data structure to represent an image in database
- */
-#[derive(Serialize, Deserialize)]
-pub struct Image {
-    pub name: String,
-    pub node: i32,
-    pub file: String,
-    pub parameters: HashMap<String, String>
-}
-
-impl Image {
-    pub fn new() -> Image {
-        Image {
-            name: String::new(),
-            node: 1, // TODO: Handle node
-            file: String::new(),
-            parameters: HashMap::new()
-        }
-    }
-
-    fn from_bson(doc: Document) -> Result<Image> {
-        match bson::from_bson::<Image>(Bson::Document(doc)) {
-            Ok(img) => Ok(img),
-            Err(e) => Err(Error::new(e.description()))
-        }
-    }
-
-    fn to_bson(&self) -> Result<Document> {
-        let doc = match bson::to_bson(self) {
-            Ok(bson) => try!(bson.as_document().ok_or(Error::new("Invalid document"))).clone(),
-            Err(e) => return Err(Error::new(e.description()))
-        };
-
-        Ok(doc)
-    }
-}
+use common::{Result, Error};
+use common::structs::Image;
 
 /*
  * Create a new image in database

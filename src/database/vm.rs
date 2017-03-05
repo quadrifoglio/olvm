@@ -3,53 +3,12 @@
  */
 
 use std::vec::Vec;
-use std::collections::HashMap;
-use std::error::Error as StdError;
 
-use bson::{self, Document, Bson};
 use mongodb::db::{Database, ThreadedDatabase};
+use bson::Document;
 
-use error::{Result, Error};
-
-/*
- * Data structure to represent a vm in database
- */
-#[derive(Serialize, Deserialize, Debug)]
-pub struct VM {
-    pub name: String,
-    pub node: i32,
-    pub backend: String,
-    pub image: String, // Name of the image the VM is based on (if any)
-    pub parameters: HashMap<String, String>
-}
-
-impl VM {
-    pub fn new() -> VM {
-        VM {
-            name: String::new(),
-            node: 1, // TODO: Handle node
-            backend: String::new(),
-            image: String::new(),
-            parameters: HashMap::new()
-        }
-    }
-
-    fn from_bson(doc: Document) -> Result<VM> {
-        match bson::from_bson::<VM>(Bson::Document(doc)) {
-            Ok(vm) => Ok(vm),
-            Err(e) => Err(Error::new(e.description()))
-        }
-    }
-
-    fn to_bson(&self) -> Result<Document> {
-        let doc = match bson::to_bson(self) {
-            Ok(bson) => try!(bson.as_document().ok_or(Error::new("Invalid document"))).clone(),
-            Err(e) => return Err(Error::new(e.description()))
-        };
-
-        Ok(doc)
-    }
-}
+use common::{Result, Error};
+use common::structs::VM;
 
 /*
  * Create a new VM in database
