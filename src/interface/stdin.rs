@@ -21,7 +21,7 @@ pub fn run(db: &Database) {
     let r = BufReader::new(io::stdin());
     for line in r.lines() {
         let line = match line {
-            Ok(l) => l.trim().to_string(),
+            Ok(l) => l.to_string(),
             Err(e) => {
                 println!("{}", e);
                 continue;

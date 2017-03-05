@@ -13,6 +13,8 @@ pub fn parse_command(s: String) -> (String, String) {
     let command: String;
     let obj: String;
 
+    let s = s.trim().to_string();
+
     let space = s.find(' ');
     if let Some(space) = space {
         let (c, o) = s.split_at(space);

@@ -2,6 +2,7 @@
  * UDP Interface
  */
 
+use std::error::Error as StdError;
 use std::net::{UdpSocket, SocketAddr};
 use std::process::{self};
 
@@ -10,12 +11,24 @@ use handler::{self};
 
 use mongodb::db::Database;
 
+fn send(socket: &UdpSocket, dst: SocketAddr, mut buf: String) -> Result<()> {
+    // Add a newline to improve the client's output
+    buf.push('\n');
+
+    match socket.send_to(buf.as_bytes(), &dst) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::new(format!("Failed to send UDP packet: {}", e)))
+    }
+}
+
 fn command(db: &Database, socket: &UdpSocket, src: SocketAddr, buf: Vec<u8>) -> Result<()> {
     let s = try!(String::from_utf8(buf).ok().ok_or(Error::new("Failed to read string from UDP packet")));
     let (command, obj) = super::parse_command(s);
-    let result = try!(handler::handle(db, command.as_str(), obj.as_str()));
 
-    try!(socket.send_to(result.as_bytes(), &src).ok().ok_or(Error::new("Failed to send UDP packet")));
+    try!(match handler::handle(db, command.as_str(), obj.as_str()) {
+        Ok(result) => send(socket, src, result),
+        Err(e) => send(socket, src, e.description().to_string())
+    });
 
     Ok(())
 }
