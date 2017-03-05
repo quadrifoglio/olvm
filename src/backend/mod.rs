@@ -31,6 +31,7 @@ pub fn script(path: &str, obj: &str) -> Result<HashMap<String, String>> {
     let mut params = HashMap::new();
 
     for line in lines {
+        // Each line should be composed of a key and a value, separated by whitespace(s)
         let mut parts = line.split_whitespace();
         let key = try!(parts.next().ok_or(Error::new("script: invalid output")));
         let value = try!(parts.next().ok_or(Error::new("script: invalid output")));

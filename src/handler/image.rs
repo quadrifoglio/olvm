@@ -35,10 +35,10 @@ fn validate(obj: &str) -> Result<Image> {
  * Handle a 'createimg' command
  */
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
-    let img = try!(validate(&obj));
+    let mut img = try!(validate(&obj));
 
     try!(database::image::create(&ctx.db, &img));
-    try!(backend::image::script_create(ctx, &img));
+    try!(backend::image::script_create(ctx, &mut img));
 
     Ok(String::new())
 }
