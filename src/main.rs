@@ -7,11 +7,15 @@ extern crate bson;
 extern crate mongodb;
 
 mod common;
-mod parser;
+mod interface;
 mod database;
 mod handler;
 
+use std::env;
+
 fn main() {
+    let mut args = env::args();
+
     let db = match database::open("127.0.0.1", 27017) {
         Ok(db) => db,
         Err(e) => {
@@ -20,5 +24,12 @@ fn main() {
         }
     };
 
-    parser::stdin::run(&db);
+    if let Some(interface) = args.nth(1) {
+        if interface == "udp" {
+            interface::udp::run("127.0.0.1:1997", &db);
+        }
+    }
+    else {
+        interface::stdin::run(&db);
+    }
 }

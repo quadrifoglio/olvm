@@ -1,4 +1,5 @@
 use mongodb::db::Database;
+use serde_json::{self};
 
 use common::{Result, Error};
 use common::structs::VM;
@@ -31,7 +32,7 @@ fn validate(db: &Database, obj: &str) -> Result<VM> {
 /*
  * Handle a 'createvm' command
  */
-pub fn create(db: &Database, obj: &str) -> Result<()> {
+pub fn create(db: &Database, obj: &str) -> Result<String> {
     // Validate and retreive VM info from the client-specified parameters
     let vm = try!(validate(db, &obj));
 
@@ -41,46 +42,43 @@ pub fn create(db: &Database, obj: &str) -> Result<()> {
 
     // Create the image
     try!(database::vm::create(db, vm));
-    Ok(())
+    Ok(String::new())
 }
 
 /*
  * Handle a 'listvm' command
  */
-pub fn list(db: &Database) -> Result<()> {
+pub fn list(db: &Database) -> Result<String> {
     let vms = try!(database::vm::list(db));
+    let s = try!(serde_json::to_string(&vms));
 
-    for vm in vms {
-        println!("name {}, node {}, backend {}, image {}", vm.name, vm.node, vm.backend, vm.image);
-    }
-
-    Ok(())
+    Ok(s)
 }
 
 /*
  * Handle a 'getvm' command
  */
-pub fn get(db: &Database, name: &str) -> Result<()> {
+pub fn get(db: &Database, name: &str) -> Result<String> {
     let vm = try!(database::vm::get(db, name));
-    println!("name {}, node {}, backend {}, image {}", vm.name, vm.node, vm.backend, vm.image);
+    let s = try!(serde_json::to_string(&vm));
 
-    Ok(())
+    Ok(s)
 }
 
 /*
  * Handle a 'updatevm' command
  */
-pub fn update(db: &Database, obj: &str) -> Result<()> {
+pub fn update(db: &Database, obj: &str) -> Result<String> {
     let vm = try!(validate(db, &obj));
     try!(database::vm::update(db, vm));
 
-    Ok(())
+    Ok(String::new())
 }
 
 /*
  * Handle a 'delvm' command
  */
-pub fn delete(db: &Database, name: &str) -> Result<()> {
+pub fn delete(db: &Database, name: &str) -> Result<String> {
     try!(database::vm::delete(db, name));
-    Ok(())
+    Ok(String::new())
 }

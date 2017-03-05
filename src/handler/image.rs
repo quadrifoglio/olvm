@@ -1,4 +1,5 @@
 use mongodb::db::Database;
+use serde_json::{self};
 
 use common::{Result, Error};
 use common::structs::Image;
@@ -23,7 +24,7 @@ fn validate(obj: &str) -> Result<Image> {
 /*
  * Handle a 'createimg' command
  */
-pub fn create(db: &Database, obj: &str) -> Result<()> {
+pub fn create(db: &Database, obj: &str) -> Result<String> {
     let img = try!(validate(&obj));
 
     // Check required parameters
@@ -35,46 +36,43 @@ pub fn create(db: &Database, obj: &str) -> Result<()> {
     }
 
     try!(database::image::create(db, img));
-    Ok(())
+    Ok(String::new())
 }
 
 /*
  * Handle a 'listimg' command
  */
-pub fn list(db: &Database) -> Result<()> {
+pub fn list(db: &Database) -> Result<String> {
     let imgs = try!(database::image::list(db));
+    let s = try!(serde_json::to_string(&imgs));
 
-    for img in imgs {
-        println!("name {}, node {}, file {}", img.name, img.node, img.file);
-    }
-
-    Ok(())
+    Ok(s)
 }
 
 /*
  * Handle a 'getimg' command
  */
-pub fn get(db: &Database, name: &str) -> Result<()> {
+pub fn get(db: &Database, name: &str) -> Result<String> {
     let img = try!(database::image::get(db, name));
-    println!("name {}, node {}, file {}", img.name, img.node, img.file);
+    let s = try!(serde_json::to_string(&img));
 
-    Ok(())
+    Ok(s)
 }
 
 /*
  * Handle a 'updateimg' command
  */
-pub fn update(db: &Database, obj: &str) -> Result<()> {
+pub fn update(db: &Database, obj: &str) -> Result<String> {
     let img = try!(validate(&obj));
     try!(database::image::update(db, img));
 
-    Ok(())
+    Ok(String::new())
 }
 
 /*
  * Handle a 'delimg' command
  */
-pub fn delete(db: &Database, name: &str) -> Result<()> {
+pub fn delete(db: &Database, name: &str) -> Result<String> {
     try!(database::image::delete(db, name));
-    Ok(())
+    Ok(String::new())
 }

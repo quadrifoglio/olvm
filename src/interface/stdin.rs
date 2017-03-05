@@ -28,23 +28,10 @@ pub fn run(db: &Database) {
             }
         };
 
-        let command: &str;
-        let obj: &str;
+        let (command, obj) = super::parse_command(line);
 
-        let space = line.find(' ');
-        if let Some(space) = space {
-            let (c, o) = line.split_at(space);
-
-            command = c.trim();
-            obj = o.trim();
-        }
-        else {
-            command = line.as_str();
-            obj = "";
-        }
-
-        match handler::handle(db, command, obj) {
-            Ok(_) => {},
+        match handler::handle(db, command.as_str(), obj.as_str()) {
+            Ok(result) => println!("{}", result),
             Err(e) => println!("{}", e)
         };
 

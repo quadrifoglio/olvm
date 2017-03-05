@@ -9,7 +9,10 @@ use mongodb::db::Database;
 
 use common::{Result, Error};
 
-pub fn handle(db: &Database, cmd: &str, obj: &str) -> Result<()> {
+/*
+ * Handle a command, and return its result as a string
+ */
+pub fn handle(db: &Database, cmd: &str, obj: &str) -> Result<String> {
     match cmd {
         "createimg" => return image::create(db, obj),
         "listimg" => return image::list(db),

@@ -4,6 +4,7 @@ use std::{self};
 use std::error::Error as StdError;
 use std::fmt::{self};
 
+use serde_json::{self};
 use mongodb::{self};
 
 /*
@@ -46,6 +47,12 @@ impl fmt::Debug for Error {
 impl std::convert::From<mongodb::Error> for Error {
     fn from(e: mongodb::Error) -> Error {
         Error::new(format!("Database error: {}", e.description()))
+    }
+}
+
+impl std::convert::From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Error {
+        Error::new(format!("JSON error: {}", e.description()))
     }
 }
 
