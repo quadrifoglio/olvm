@@ -11,7 +11,7 @@ use mongodb::db::Database;
 fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
     let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
     let backend = try!(p.get("backend").ok_or(Error::new("A 'backend' parameter is required")));
-    let image = try!(p.get("image").ok_or(Error::new("An 'image' parameter is required")));
+    let image = p.get("image");
 
     let mut vm = VM::new();
     vm.parameters = p.clone();
@@ -19,11 +19,20 @@ fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
     vm.name = name.to_string();
     vm.parameters.remove("name");
 
+    // TODO: Check backend, make sure it exists
     vm.backend = backend.to_string();
     vm.parameters.remove("backend");
 
-    vm.image = image.to_string();
-    vm.parameters.remove("image");
+    if let Some(img) = image {
+        if let Ok(_) = database::image::get(db, img) {
+            vm.image = img.to_string();
+        }
+        else {
+            return Err(Error::new("Image not found"));
+        }
+
+        vm.parameters.remove("image");
+    }
 
     Ok(vm)
 }
@@ -35,8 +44,12 @@ pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
     // Validate and retreive VM info from the client-specified parameters
     let vm = try!(validate(db, &mut p));
 
+    if let Ok(_) = database::vm::get(db, vm.name.as_str()) {
+        return Err(Error::new("This VM name is not available"));
+    }
+
     // Create the image
-    let id = try!(database::vm::create(db, vm));
+    try!(database::vm::create(db, vm));
     Ok(())
 }
 
@@ -69,7 +82,7 @@ pub fn get(db: &Database, p: Parameters) -> Result<()> {
  * Handle a 'updatevm' command
  */
 pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
-    let mut vm = try!(validate(db, &mut p));
+    let vm = try!(validate(db, &mut p));
     try!(database::vm::update(db, vm));
 
     Ok(())

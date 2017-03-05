@@ -14,7 +14,7 @@ use error::{Result, Error};
 /*
  * Data structure to represent a vm in database
  */
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct VM {
     pub name: String,
     pub node: i32,
@@ -96,7 +96,19 @@ pub fn get(db: &Database, name: &str) -> Result<VM> {
 pub fn update(db: &Database, vm: VM) -> Result<()> {
     let name = vm.name.as_str();
 
-    try!(db.collection("vms").update_one(doc!{"name" => name}, try!(VM::to_bson(&vm)), None));
+    let mut p = Document::new();
+    for (k, v) in &vm.parameters {
+        p.insert(k.clone(), v.clone());
+    }
+
+    let update = doc! {
+        "parameters" => p
+    };
+
+    try!(db.collection("vms").update_one(doc!{"name" => name}, doc! {
+        "$set" => update
+    }, None));
+
     Ok(())
 }
 

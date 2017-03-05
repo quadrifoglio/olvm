@@ -93,8 +93,22 @@ pub fn get(db: &Database, name: &str) -> Result<Image> {
  */
 pub fn update(db: &Database, img: Image) -> Result<()> {
     let name = img.name.as_str();
+    let file = img.file.as_str();
 
-    try!(db.collection("images").update_one(doc!{"name" => name}, try!(Image::to_bson(&img)), None));
+    let mut p = Document::new();
+    for (k, v) in &img.parameters {
+        p.insert(k.clone(), v.clone());
+    }
+
+    let update = doc! {
+        "file" => file,
+        "parameters" => p
+    };
+
+    try!(db.collection("images").update_one(doc!{"name" => name}, doc! {
+        "$set" => update
+    }, None));
+
     Ok(())
 }
 
