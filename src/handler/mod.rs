@@ -8,21 +8,20 @@ mod vm;
 use mongodb::db::Database;
 
 use common::{Result, Error};
-use parser::Command;
 
-pub fn handle(db: &Database, c: Command) -> Result<()> {
-    match c.name.as_str() {
-        "createimg" => return image::create(db, c.parameters),
+pub fn handle(db: &Database, cmd: &str, obj: &str) -> Result<()> {
+    match cmd {
+        "createimg" => return image::create(db, obj),
         "listimg" => return image::list(db),
-        "getimg" => return image::get(db, c.parameters),
-        "updateimg" => return image::update(db, c.parameters),
-        "delimg" => return image::delete(db, c.parameters),
+        "getimg" => return image::get(db, obj),
+        "updateimg" => return image::update(db, obj),
+        "delimg" => return image::delete(db, obj),
 
-        "createvm" => return vm::create(db, c.parameters),
+        "createvm" => return vm::create(db, obj),
         "listvm" => return vm::list(db),
-        "getvm" => return vm::get(db, c.parameters),
-        "updatevm" => return vm::update(db, c.parameters),
-        "delvm" => return vm::delete(db, c.parameters),
+        "getvm" => return vm::get(db, obj),
+        "updatevm" => return vm::update(db, obj),
+        "delvm" => return vm::delete(db, obj),
 
         _ => return Err(Error::new("Unknown command"))
     }

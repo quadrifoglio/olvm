@@ -2,24 +2,20 @@ use mongodb::db::Database;
 
 use common::{Result, Error};
 use common::structs::Image;
-use parser::Parameters;
 use database::{self};
 
 /*
  * Validates the user-specified parameters for image creation/update
  */
-fn validate(p: &mut Parameters) -> Result<Image> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
-    let file = try!(p.get("file").ok_or(Error::new("A 'file' parameter is required")));
+fn validate(obj: &str) -> Result<Image> {
+    let img = try!(Image::from_json(obj));
 
-    let mut img = Image::new();
-    img.parameters = p.clone();
-
-    img.name = name.to_string();
-    img.parameters.remove("name");
-
-    img.file = file.to_string();
-    img.parameters.remove("file");
+    if img.name.len() == 0 {
+        return Err(Error::new("A 'name' is required"));
+    }
+    if img.file.len() == 0 {
+        return Err(Error::new("A 'file' is required"));
+    }
 
     Ok(img)
 }
@@ -27,8 +23,8 @@ fn validate(p: &mut Parameters) -> Result<Image> {
 /*
  * Handle a 'createimg' command
  */
-pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
-    let img = try!(validate(&mut p));
+pub fn create(db: &Database, obj: &str) -> Result<()> {
+    let img = try!(validate(&obj));
 
     // Check required parameters
     if img.name.len() == 0 {
@@ -58,9 +54,7 @@ pub fn list(db: &Database) -> Result<()> {
 /*
  * Handle a 'getimg' command
  */
-pub fn get(db: &Database, p: Parameters) -> Result<()> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
-
+pub fn get(db: &Database, name: &str) -> Result<()> {
     let img = try!(database::image::get(db, name));
     println!("name {}, node {}, file {}", img.name, img.node, img.file);
 
@@ -70,8 +64,8 @@ pub fn get(db: &Database, p: Parameters) -> Result<()> {
 /*
  * Handle a 'updateimg' command
  */
-pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
-    let img = try!(validate(&mut p));
+pub fn update(db: &Database, obj: &str) -> Result<()> {
+    let img = try!(validate(&obj));
     try!(database::image::update(db, img));
 
     Ok(())
@@ -80,9 +74,7 @@ pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'delimg' command
  */
-pub fn delete(db: &Database, p: Parameters) -> Result<()> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+pub fn delete(db: &Database, name: &str) -> Result<()> {
     try!(database::image::delete(db, name));
-
     Ok(())
 }

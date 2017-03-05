@@ -2,36 +2,27 @@ use mongodb::db::Database;
 
 use common::{Result, Error};
 use common::structs::VM;
-use parser::Parameters;
 use database::{self};
 
 /*
  * Validates the user-specified parameters for VM creation
  */
-fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
-    let backend = try!(p.get("backend").ok_or(Error::new("A 'backend' parameter is required")));
-    let image = p.get("image");
+fn validate(db: &Database, obj: &str) -> Result<VM> {
+    let vm = try!(VM::from_json(obj));
 
-    let mut vm = VM::new();
-    vm.parameters = p.clone();
-
-    vm.name = name.to_string();
-    vm.parameters.remove("name");
+    if vm.name.len() == 0 {
+        return Err(Error::new("A 'name' is required"));
+    }
+    if vm.backend.len() == 0 {
+        return Err(Error::new("A 'backend' is required"));
+    }
 
     // TODO: Check backend, make sure it exists
-    vm.backend = backend.to_string();
-    vm.parameters.remove("backend");
 
-    if let Some(img) = image {
-        if let Ok(_) = database::image::get(db, img) {
-            vm.image = img.to_string();
-        }
-        else {
+    if vm.image.len() > 0 {
+        if let Err(_) = database::image::get(db, vm.image.as_str()) {
             return Err(Error::new("Image not found"));
         }
-
-        vm.parameters.remove("image");
     }
 
     Ok(vm)
@@ -40,9 +31,9 @@ fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
 /*
  * Handle a 'createvm' command
  */
-pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
+pub fn create(db: &Database, obj: &str) -> Result<()> {
     // Validate and retreive VM info from the client-specified parameters
-    let vm = try!(validate(db, &mut p));
+    let vm = try!(validate(db, &obj));
 
     if let Ok(_) = database::vm::get(db, vm.name.as_str()) {
         return Err(Error::new("This VM name is not available"));
@@ -69,9 +60,7 @@ pub fn list(db: &Database) -> Result<()> {
 /*
  * Handle a 'getvm' command
  */
-pub fn get(db: &Database, p: Parameters) -> Result<()> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
-
+pub fn get(db: &Database, name: &str) -> Result<()> {
     let vm = try!(database::vm::get(db, name));
     println!("name {}, node {}, backend {}, image {}", vm.name, vm.node, vm.backend, vm.image);
 
@@ -81,8 +70,8 @@ pub fn get(db: &Database, p: Parameters) -> Result<()> {
 /*
  * Handle a 'updatevm' command
  */
-pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
-    let vm = try!(validate(db, &mut p));
+pub fn update(db: &Database, obj: &str) -> Result<()> {
+    let vm = try!(validate(db, &obj));
     try!(database::vm::update(db, vm));
 
     Ok(())
@@ -91,9 +80,7 @@ pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
 /*
  * Handle a 'delvm' command
  */
-pub fn delete(db: &Database, p: Parameters) -> Result<()> {
-    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+pub fn delete(db: &Database, name: &str) -> Result<()> {
     try!(database::vm::delete(db, name));
-
     Ok(())
 }

@@ -6,5 +6,6 @@ authors = ["Quadrifoglio <clement@dreamvids.fr>"]
 [dependencies]
 serde = "0.9.10"
 serde_derive = "0.9.1"
+serde_json = "0.9.8"
 bson = "0.4.4"
 mongodb = "0.2.3"

@@ -1,28 +1,36 @@
 use std::error::Error as StdError;
 use std::collections::HashMap;
 
+use serde_json::{self};
 use bson::{self, Document, Bson};
 
 use common::{Result, Error};
 
+fn default_node() -> i32 {
+    0
+}
+
 /*
  * Data structure to represent an image
  */
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Image {
     pub name: String,
+
+    #[serde(default = "default_node")]
     pub node: i32,
+
     pub file: String,
+
+    #[serde(default = "HashMap::new")]
     pub parameters: HashMap<String, String>
 }
 
 impl Image {
-    pub fn new() -> Image {
-        Image {
-            name: String::new(),
-            node: 1, // TODO: Handle node
-            file: String::new(),
-            parameters: HashMap::new()
+    pub fn from_json(s: &str) -> Result<Image> {
+        match serde_json::from_str(s) {
+            Ok(img) => Ok(img),
+            Err(e) => Err(Error::new(format!("Failed to parse JSON into an Image structure: {}", e)))
         }
     }
 
@@ -49,20 +57,24 @@ impl Image {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VM {
     pub name: String,
+
+    #[serde(default = "default_node")]
     pub node: i32,
+
     pub backend: String,
+
+    #[serde(default = "String::new")]
     pub image: String, // Name of the image the VM is based on (if any)
+
+    #[serde(default = "HashMap::new")]
     pub parameters: HashMap<String, String>
 }
 
 impl VM {
-    pub fn new() -> VM {
-        VM {
-            name: String::new(),
-            node: 1, // TODO: Handle node
-            backend: String::new(),
-            image: String::new(),
-            parameters: HashMap::new()
+    pub fn from_json(s: &str) -> Result<VM> {
+        match serde_json::from_str(s) {
+            Ok(vm) => Ok(vm),
+            Err(e) => Err(Error::new(format!("Failed to parse JSON into a VM structure: {}", e)))
         }
     }
 
