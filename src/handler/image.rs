@@ -9,31 +9,17 @@ use mongodb::db::Database;
  * Validates the user-specified parameters for image creation/update
  */
 fn validate(p: &mut Parameters) -> Result<Image> {
-    let id = p.get("id");
-    let name = p.get("name");
-    let file = p.get("file");
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+    let file = try!(p.get("file").ok_or(Error::new("A 'file' parameter is required")));
 
     let mut img = Image::new();
     img.parameters = p.clone();
 
-    // Remove 'id' parameter if any
-    // This occurs when an update request is performed
-    // The 'id' parameter should not be used as an optional parameter
-    if let Some(_) = id {
-        img.parameters.remove("id");
-    }
+    img.name = name.to_string();
+    img.parameters.remove("name");
 
-    // Check name
-    if let Some(name) = name {
-        img.name = name.clone();
-        img.parameters.remove("name");
-    }
-
-    // Check image
-    if let Some(file) = file {
-        img.file = file.clone();
-        img.parameters.remove("file");
-    }
+    img.file = file.to_string();
+    img.parameters.remove("file");
 
     Ok(img)
 }
@@ -52,9 +38,7 @@ pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
         return Err(Error::new("A 'file' parameter is required"));
     }
 
-    let id = try!(database::image::create(db, img));
-    println!("id {}", id);
-
+    try!(database::image::create(db, img));
     Ok(())
 }
 
@@ -65,7 +49,7 @@ pub fn list(db: &Database) -> Result<()> {
     let imgs = try!(database::image::list(db));
 
     for img in imgs {
-        println!("id {}, node {}, name {}, file {}", img.id, img.node, img.name, img.file);
+        println!("name {}, node {}, file {}", img.name, img.node, img.file);
     }
 
     Ok(())
@@ -75,14 +59,10 @@ pub fn list(db: &Database) -> Result<()> {
  * Handle a 'getimg' command
  */
 pub fn get(db: &Database, p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
 
-    let img = try!(database::image::get(db, id));
-    println!("id {}, node {}, name {}, file {}", img.id, img.node, img.name, img.file);
+    let img = try!(database::image::get(db, name));
+    println!("name {}, node {}, file {}", img.name, img.node, img.file);
 
     Ok(())
 }
@@ -91,15 +71,7 @@ pub fn get(db: &Database, p: Parameters) -> Result<()> {
  * Handle a 'updateimg' command
  */
 pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
-
-    let mut img = try!(validate(&mut p));
-    img.id = id;
-
+    let img = try!(validate(&mut p));
     try!(database::image::update(db, img));
 
     Ok(())
@@ -109,13 +81,8 @@ pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
  * Handle a 'delimg' command
  */
 pub fn delete(db: &Database, p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
-
-    try!(database::image::delete(db, id));
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+    try!(database::image::delete(db, name));
 
     Ok(())
 }

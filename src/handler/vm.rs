@@ -2,7 +2,6 @@ use error::{Result, Error};
 use parser::Parameters;
 use database::{self};
 use database::vm::VM;
-use backend::{self};
 
 use mongodb::db::Database;
 
@@ -10,44 +9,21 @@ use mongodb::db::Database;
  * Validates the user-specified parameters for VM creation
  */
 fn validate(db: &Database, p: &mut Parameters) -> Result<VM> {
-    let id = p.get("id");
-    let backend = p.get("backend");
-    let image = p.get("image");
-    let name = p.get("name");
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+    let backend = try!(p.get("backend").ok_or(Error::new("A 'backend' parameter is required")));
+    let image = try!(p.get("image").ok_or(Error::new("An 'image' parameter is required")));
 
     let mut vm = VM::new();
     vm.parameters = p.clone();
 
-    // Remove 'id' parameter if any
-    // This occurs when an update request is performed
-    // The 'id' parameter should not be used as an optional parameter
-    if let Some(_) = id {
-        vm.parameters.remove("id");
-    }
+    vm.name = name.to_string();
+    vm.parameters.remove("name");
 
-    // Check backend
-    if let Some(backend) = backend {
-        vm.backend = try!(backend::from_str(backend));
-        vm.parameters.remove("backend");
-    }
+    vm.backend = backend.to_string();
+    vm.parameters.remove("backend");
 
-    // Check image
-    if let Some(img) = image {
-        // Parse the image ID and retreive it from the database
-        let image = match img.parse::<i32>() {
-            Ok(image) => try!(database::image::get(db, image)),
-            Err(_) => return Err(Error::new("The 'image' parameter must be an intger"))
-        };
-
-        vm.image = image.id;
-        vm.parameters.remove("image");
-    }
-
-    // Check name
-    if let Some(name) = name {
-        vm.name = name.clone();
-        vm.parameters.remove("name");
-    }
+    vm.image = image.to_string();
+    vm.parameters.remove("image");
 
     Ok(vm)
 }
@@ -59,18 +35,8 @@ pub fn create(db: &Database, mut p: Parameters) -> Result<()> {
     // Validate and retreive VM info from the client-specified parameters
     let vm = try!(validate(db, &mut p));
 
-    // Check required parameters
-    if vm.backend == 0 {
-        return Err(Error::new("A 'backend' parameter is required"));
-    }
-    if vm.name.len() == 0 {
-        return Err(Error::new("A 'name' parameter is required"));
-    }
-
     // Create the image
     let id = try!(database::vm::create(db, vm));
-    println!("id {}", id);
-
     Ok(())
 }
 
@@ -81,8 +47,7 @@ pub fn list(db: &Database) -> Result<()> {
     let vms = try!(database::vm::list(db));
 
     for vm in vms {
-        let backend = try!(backend::to_string(vm.backend));
-        println!("id {}, node {}, backend {}, image {}, name {}", vm.id, vm.node, backend, vm.image, vm.name);
+        println!("name {}, node {}, backend {}, image {}", vm.name, vm.node, vm.backend, vm.image);
     }
 
     Ok(())
@@ -92,16 +57,10 @@ pub fn list(db: &Database) -> Result<()> {
  * Handle a 'getvm' command
  */
 pub fn get(db: &Database, p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
 
-    let vm = try!(database::vm::get(db, id));
-    let backend = try!(backend::to_string(vm.backend));
-
-    println!("id {}, node {}, backend {}, image {}, name {}", vm.id, vm.node, backend, vm.image, vm.name);
+    let vm = try!(database::vm::get(db, name));
+    println!("name {}, node {}, backend {}, image {}", vm.name, vm.node, vm.backend, vm.image);
 
     Ok(())
 }
@@ -110,23 +69,7 @@ pub fn get(db: &Database, p: Parameters) -> Result<()> {
  * Handle a 'updatevm' command
  */
 pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
-
     let mut vm = try!(validate(db, &mut p));
-    vm.id = id;
-
-    // Check parameters to provide error messages
-    if vm.backend != 0 {
-        return Err(Error::new("The 'backend' parameter can not be changed"));
-    }
-    if vm.image != 0 {
-        return Err(Error::new("The 'image' parameter can not be changed"));
-    }
-
     try!(database::vm::update(db, vm));
 
     Ok(())
@@ -136,13 +79,8 @@ pub fn update(db: &Database, mut p: Parameters) -> Result<()> {
  * Handle a 'delvm' command
  */
 pub fn delete(db: &Database, p: Parameters) -> Result<()> {
-    let id = try!(p.get("id").ok_or(Error::new("An 'id' parameter is required"))).to_string();
-    let id = match id.parse::<i32>() {
-        Ok(id) => id,
-        Err(_) => return Err(Error::new("The 'id' parameter must be an intger"))
-    };
-
-    try!(database::vm::delete(db, id));
+    let name = try!(p.get("name").ok_or(Error::new("A 'name' parameter is required")));
+    try!(database::vm::delete(db, name));
 
     Ok(())
 }

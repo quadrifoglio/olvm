@@ -4,67 +4,106 @@
 
 use std::vec::Vec;
 use std::collections::HashMap;
+use std::error::Error as StdError;
 
-use mongodb::db::Database;
+use bson::{self, Document, Bson};
+use mongodb::db::{Database, ThreadedDatabase};
 
 use error::{Result, Error};
 
 /*
  * Data structure to represent a vm in database
  */
+#[derive(Serialize, Deserialize)]
 pub struct VM {
-    pub id: i32,
-    pub node: i32,
-    pub backend: i32,
-    pub image: i32,
     pub name: String,
+    pub node: i32,
+    pub backend: String,
+    pub image: String, // Name of the image the VM is based on (if any)
     pub parameters: HashMap<String, String>
 }
 
 impl VM {
     pub fn new() -> VM {
         VM {
-            id: 0,
-            node: 1, // TODO: Handle node
-            backend: 0,
-            image: 0,
             name: String::new(),
+            node: 1, // TODO: Handle node
+            backend: String::new(),
+            image: String::new(),
             parameters: HashMap::new()
         }
+    }
+
+    fn from_bson(doc: Document) -> Result<VM> {
+        match bson::from_bson::<VM>(Bson::Document(doc)) {
+            Ok(vm) => Ok(vm),
+            Err(e) => Err(Error::new(e.description()))
+        }
+    }
+
+    fn to_bson(&self) -> Result<Document> {
+        let doc = match bson::to_bson(self) {
+            Ok(bson) => try!(bson.as_document().ok_or(Error::new("Invalid document"))).clone(),
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        Ok(doc)
     }
 }
 
 /*
  * Create a new VM in database
  */
-pub fn create(db: &Database, vm: VM) -> Result<i32> {
-    Ok(0)
+pub fn create(db: &Database, vm: VM) -> Result<()> {
+    let doc = try!(vm.to_bson());
+    try!(db.collection("vms").insert_one(doc, None));
+
+    Ok(())
 }
 
 /*
  * List VMs in database
  */
 pub fn list(db: &Database) -> Result<Vec<VM>> {
-    Ok(Vec::new())
+    let mut vms = Vec::new();
+    let cursor = try!(db.collection("vms").find(None, None));
+
+    for result in cursor {
+        if let Ok(doc) = result {
+            vms.push(try!(VM::from_bson(doc)));
+        }
+    }
+
+    Ok(vms)
 }
 
 /*
- * Get a VM from the database
+ * Get an VM from the database
  */
-pub fn get(db: &Database, id: i32) -> Result<VM> {
-    Ok(VM::new())
+pub fn get(db: &Database, name: &str) -> Result<VM> {
+    let doc = try!(db.collection("vms").find_one(Some(doc!{"name" => name}), None));
+
+    if let Some(vm) = doc {
+        return Ok(try!(VM::from_bson(vm)));
+    }
+
+    Err(Error::new("VM not found"))
 }
 
 /*
- * Update a VM in the database
+ * Update an VM in the database
  */
 pub fn update(db: &Database, vm: VM) -> Result<()> {
+    let name = vm.name.as_str();
+
+    try!(db.collection("vms").update_one(doc!{"name" => name}, try!(VM::to_bson(&vm)), None));
     Ok(())
 }
 
 /*
- * Delete a VM from the database
+ * Delete an VM from the database
  */
-pub fn delete(db: &Database, id: i32) -> Result<()> {
+pub fn delete(db: &Database, name: &str) -> Result<()> {
+    try!(db.collection("vms").delete_one(doc!{"name" => name}, None));
     Ok(())
 }

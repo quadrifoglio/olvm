@@ -1,9 +1,12 @@
 #[macro_use]
+extern crate serde_derive;
+
+#[macro_use(bson, doc)]
+extern crate bson;
 extern crate mongodb;
 
 mod error;
 mod parser;
-mod backend;
 mod database;
 mod handler;
 
