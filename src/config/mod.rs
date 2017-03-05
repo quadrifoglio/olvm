@@ -7,7 +7,7 @@ use std::io::Read;
 
 use common::{Result, Error};
 
-use toml::{self};
+use toml;
 
 /*
  * Database configuration

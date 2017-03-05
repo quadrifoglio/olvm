@@ -1,10 +1,10 @@
 use std::path::Path;
 
-use serde_json::{self};
+use serde_json;
 
 use common::{Context, Result, Error};
 use common::structs::Image;
-use database::{self};
+use database;
 use backend;
 
 /*

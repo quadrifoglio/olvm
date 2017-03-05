@@ -1,13 +1,13 @@
 pub mod structs;
 
-use std::{self};
+use std;
 use std::error::Error as StdError;
-use std::fmt::{self};
+use std::fmt;
 
-use serde_json::{self};
-use mongodb::{self};
+use serde_json;
+use mongodb;
 
-use config::{self};
+use config;
 
 /*
  * Global context struct

@@ -1,8 +1,8 @@
-use serde_json::{self};
+use serde_json;
 
 use common::{Context, Result, Error};
 use common::structs::VM;
-use database::{self};
+use database;
 
 /*
  * Validates the user-specified parameters for VM creation

@@ -5,7 +5,7 @@
 use std::io::{self, BufReader, BufRead, Write};
 
 use common::Context;
-use handler::{self};
+use handler;
 
 /*
  * Print the prompt

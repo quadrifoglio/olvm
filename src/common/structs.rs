@@ -1,7 +1,7 @@
 use std::error::Error as StdError;
 use std::collections::HashMap;
 
-use serde_json::{self};
+use serde_json;
 use bson::{self, Document, Bson};
 
 use common::{Result, Error};

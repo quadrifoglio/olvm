@@ -4,10 +4,10 @@
 
 use std::error::Error as StdError;
 use std::net::{UdpSocket, SocketAddr};
-use std::process::{self};
+use std::process;
 
 use common::{Context, Result, Error};
-use handler::{self};
+use handler;
 
 fn send(socket: &UdpSocket, dst: SocketAddr, mut buf: String) -> Result<()> {
     // Add a newline to improve the client's output
