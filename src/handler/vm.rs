@@ -40,7 +40,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     }
 
     // Create the image
-    try!(database::vm::create(&ctx.db, vm));
+    try!(database::vm::create(&ctx.db, &vm));
     Ok(String::new())
 }
 
@@ -69,7 +69,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
     let vm = try!(validate(ctx, &obj));
-    try!(database::vm::update(&ctx.db, vm));
+    try!(database::vm::update(&ctx.db, &vm));
 
     Ok(String::new())
 }

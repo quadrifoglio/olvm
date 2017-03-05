@@ -13,7 +13,7 @@ use common::structs::VM;
 /*
  * Create a new VM in database
  */
-pub fn create(db: &Database, vm: VM) -> Result<()> {
+pub fn create(db: &Database, vm: &VM) -> Result<()> {
     let doc = try!(vm.to_bson());
     try!(db.collection("vms").insert_one(doc, None));
 
@@ -52,7 +52,7 @@ pub fn get(db: &Database, name: &str) -> Result<VM> {
 /*
  * Update an VM in the database
  */
-pub fn update(db: &Database, vm: VM) -> Result<()> {
+pub fn update(db: &Database, vm: &VM) -> Result<()> {
     let name = vm.name.as_str();
 
     let mut p = Document::new();

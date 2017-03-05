@@ -27,16 +27,16 @@ pub struct UDP {
 }
 
 /*
- * KVM backend configuration
+ * Backend configuration
  */
 #[derive(Deserialize)]
-pub struct KVMImage {
+pub struct BackendImage {
     pub create: Option<String>,
     pub delete: Option<String>
 }
 
 #[derive(Deserialize)]
-pub struct KVMVM {
+pub struct BackendVM {
     pub create: Option<String>,
     pub start: Option<String>,
     pub stop: Option<String>,
@@ -44,17 +44,10 @@ pub struct KVMVM {
 }
 
 #[derive(Deserialize)]
-pub struct KVM {
-    pub image: KVMImage,
-    pub vm: KVMVM
-}
-
-/*
- * Backend configuration
- */
-#[derive(Deserialize)]
 pub struct Backend {
-    pub kvm: Option<KVM>
+    pub name: String,
+    pub image: BackendImage,
+    pub vm: BackendVM
 }
 
 /*
@@ -64,15 +57,18 @@ pub struct Backend {
 pub struct Config {
     pub database: Database,
     pub udp: Option<UDP>,
-    pub backend: Backend
+    pub backend: Vec<Backend>
 }
 
 impl Config {
-    pub fn has_backend(&self, backend: &str) -> bool {
-        match backend {
-            "kvm" => self.backend.kvm.is_some(),
-            _ => false
+    pub fn get_backend(&self, backend: &str) -> Option<&Backend> {
+        for b in &self.backend {
+            if b.name.as_str() == backend {
+                return Some(b)
+            }
         }
+
+        None
     }
 }
 

@@ -13,7 +13,7 @@ use common::structs::Image;
 /*
  * Create a new image in database
  */
-pub fn create(db: &Database, img: Image) -> Result<()> {
+pub fn create(db: &Database, img: &Image) -> Result<()> {
     let doc = try!(img.to_bson());
     try!(db.collection("images").insert_one(doc, None));
 
@@ -52,7 +52,7 @@ pub fn get(db: &Database, name: &str) -> Result<Image> {
 /*
  * Update an image in the database
  */
-pub fn update(db: &Database, img: Image) -> Result<()> {
+pub fn update(db: &Database, img: &Image) -> Result<()> {
     let name = img.name.as_str();
     let file = img.file.as_str();
 

@@ -12,6 +12,7 @@ mod common;
 mod config;
 mod interface;
 mod database;
+mod backend;
 mod handler;
 
 fn main() {
