@@ -30,14 +30,7 @@ pub fn parse_command(s: String) -> (String, String) {
     return (command, obj)
 }
 
-/*
- * Standard Input interface - Read commands from stdin
- */
 pub mod stdin;
-
-/*
- * UDP interface - Read commands from a listening UDP socket
- */
 pub mod udp;
 
 /*

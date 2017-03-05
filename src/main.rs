@@ -6,17 +6,24 @@ extern crate serde_json;
 extern crate bson;
 extern crate mongodb;
 
+extern crate toml;
+
 mod common;
+mod config;
 mod interface;
 mod database;
 mod handler;
 
-use std::env;
-
 fn main() {
-    let mut args = env::args();
+    let conf = match config::open("/etc/olvm.conf") {
+        Ok(conf) => conf,
+        Err(e) => {
+            println!("Failed to load configuration: {}", e);
+            return;
+        }
+    };
 
-    let db = match database::open("127.0.0.1", 27017) {
+    let db = match database::open(conf.database.host.as_str(), conf.database.port) {
         Ok(db) => db,
         Err(e) => {
             println!("Failed to connect to database: {}", e);
@@ -24,12 +31,15 @@ fn main() {
         }
     };
 
-    if let Some(interface) = args.nth(1) {
-        if interface == "udp" {
-            interface::udp::run("127.0.0.1:1997", &db);
-        }
+    let ctx = common::Context {
+        conf: conf,
+        db: db
+    };
+
+    if let Some(udp) = ctx.conf.udp {
+        interface::udp::run(udp.addr.as_str(), &ctx.db);
     }
     else {
-        interface::stdin::run(&db);
+        interface::stdin::run(&ctx.db);
     }
 }

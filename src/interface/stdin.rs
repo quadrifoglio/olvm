@@ -1,3 +1,7 @@
+/*
+ * Standard Input interface - Read commands from stdin
+ */
+
 use std::io::{self, BufReader, BufRead, Write};
 
 use mongodb::db::Database;

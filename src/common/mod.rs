@@ -7,6 +7,16 @@ use std::fmt::{self};
 use serde_json::{self};
 use mongodb::{self};
 
+use config::{self};
+
+/*
+ * Global context struct
+ */
+pub struct Context {
+    pub conf: config::Config,
+    pub db: mongodb::db::Database
+}
+
 /*
  * Error type
  */
