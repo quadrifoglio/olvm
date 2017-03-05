@@ -16,6 +16,7 @@ mod backend;
 mod handler;
 
 fn main() {
+    // Open and parse configuration file
     let conf = match config::open("/etc/olvm.conf") {
         Ok(conf) => conf,
         Err(e) => {
@@ -24,6 +25,7 @@ fn main() {
         }
     };
 
+    // Open connection to the database
     let db = match database::open(conf.database.host.as_str(), conf.database.port) {
         Ok(db) => db,
         Err(e) => {
@@ -32,11 +34,13 @@ fn main() {
         }
     };
 
+    // Create global context, shared everywhere
     let ctx = common::Context {
         conf: conf,
         db: db
     };
 
+    // Start the chosen interface, UDP or stdin
     if ctx.conf.udp.is_some() {
         interface::udp::run(&ctx);
     }

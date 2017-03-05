@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use serde_json::{self};
 
 use common::{Context, Result, Error};
@@ -19,6 +21,11 @@ fn validate(obj: &str) -> Result<Image> {
     }
     if img.file.len() == 0 {
         return Err(Error::new("A 'file' is required"));
+    }
+
+    // Check if the file exists
+    if !Path::new(img.file.as_str()).exists() {
+        return Err(Error::new(format!("{}: file not found", img.file)));
     }
 
     Ok(img)
