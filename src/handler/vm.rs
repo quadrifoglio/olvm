@@ -1,14 +1,13 @@
-use mongodb::db::Database;
 use serde_json::{self};
 
-use common::{Result, Error};
+use common::{Context, Result, Error};
 use common::structs::VM;
 use database::{self};
 
 /*
  * Validates the user-specified parameters for VM creation
  */
-fn validate(db: &Database, obj: &str) -> Result<VM> {
+fn validate(ctx: &Context, obj: &str) -> Result<VM> {
     let vm = try!(VM::from_json(obj));
 
     if vm.name.len() == 0 {
@@ -21,7 +20,7 @@ fn validate(db: &Database, obj: &str) -> Result<VM> {
     // TODO: Check backend, make sure it exists
 
     if vm.image.len() > 0 {
-        if let Err(_) = database::image::get(db, vm.image.as_str()) {
+        if let Err(_) = database::image::get(&ctx.db, vm.image.as_str()) {
             return Err(Error::new("Image not found"));
         }
     }
@@ -32,24 +31,24 @@ fn validate(db: &Database, obj: &str) -> Result<VM> {
 /*
  * Handle a 'createvm' command
  */
-pub fn create(db: &Database, obj: &str) -> Result<String> {
+pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     // Validate and retreive VM info from the client-specified parameters
-    let vm = try!(validate(db, &obj));
+    let vm = try!(validate(ctx, &obj));
 
-    if let Ok(_) = database::vm::get(db, vm.name.as_str()) {
+    if let Ok(_) = database::vm::get(&ctx.db, vm.name.as_str()) {
         return Err(Error::new("This VM name is not available"));
     }
 
     // Create the image
-    try!(database::vm::create(db, vm));
+    try!(database::vm::create(&ctx.db, vm));
     Ok(String::new())
 }
 
 /*
  * Handle a 'listvm' command
  */
-pub fn list(db: &Database) -> Result<String> {
-    let vms = try!(database::vm::list(db));
+pub fn list(ctx: &Context) -> Result<String> {
+    let vms = try!(database::vm::list(&ctx.db));
     let s = try!(serde_json::to_string(&vms));
 
     Ok(s)
@@ -58,8 +57,8 @@ pub fn list(db: &Database) -> Result<String> {
 /*
  * Handle a 'getvm' command
  */
-pub fn get(db: &Database, name: &str) -> Result<String> {
-    let vm = try!(database::vm::get(db, name));
+pub fn get(ctx: &Context, name: &str) -> Result<String> {
+    let vm = try!(database::vm::get(&ctx.db, name));
     let s = try!(serde_json::to_string(&vm));
 
     Ok(s)
@@ -68,9 +67,9 @@ pub fn get(db: &Database, name: &str) -> Result<String> {
 /*
  * Handle a 'updatevm' command
  */
-pub fn update(db: &Database, obj: &str) -> Result<String> {
-    let vm = try!(validate(db, &obj));
-    try!(database::vm::update(db, vm));
+pub fn update(ctx: &Context, obj: &str) -> Result<String> {
+    let vm = try!(validate(ctx, &obj));
+    try!(database::vm::update(&ctx.db, vm));
 
     Ok(String::new())
 }
@@ -78,7 +77,7 @@ pub fn update(db: &Database, obj: &str) -> Result<String> {
 /*
  * Handle a 'delvm' command
  */
-pub fn delete(db: &Database, name: &str) -> Result<String> {
-    try!(database::vm::delete(db, name));
+pub fn delete(ctx: &Context, name: &str) -> Result<String> {
+    try!(database::vm::delete(&ctx.db, name));
     Ok(String::new())
 }

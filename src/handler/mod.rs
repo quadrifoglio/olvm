@@ -5,26 +5,24 @@
 mod image;
 mod vm;
 
-use mongodb::db::Database;
-
-use common::{Result, Error};
+use common::{Context, Result, Error};
 
 /*
  * Handle a command, and return its result as a string
  */
-pub fn handle(db: &Database, cmd: &str, obj: &str) -> Result<String> {
+pub fn handle(ctx: &Context, cmd: &str, obj: &str) -> Result<String> {
     match cmd {
-        "createimg" => return image::create(db, obj),
-        "listimg" => return image::list(db),
-        "getimg" => return image::get(db, obj),
-        "updateimg" => return image::update(db, obj),
-        "delimg" => return image::delete(db, obj),
+        "createimg" => return image::create(ctx, obj),
+        "listimg" => return image::list(ctx),
+        "getimg" => return image::get(ctx, obj),
+        "updateimg" => return image::update(ctx, obj),
+        "delimg" => return image::delete(ctx, obj),
 
-        "createvm" => return vm::create(db, obj),
-        "listvm" => return vm::list(db),
-        "getvm" => return vm::get(db, obj),
-        "updatevm" => return vm::update(db, obj),
-        "delvm" => return vm::delete(db, obj),
+        "createvm" => return vm::create(ctx, obj),
+        "listvm" => return vm::list(ctx),
+        "getvm" => return vm::get(ctx, obj),
+        "updatevm" => return vm::update(ctx, obj),
+        "delvm" => return vm::delete(ctx, obj),
 
         _ => return Err(Error::new("Unknown command"))
     }

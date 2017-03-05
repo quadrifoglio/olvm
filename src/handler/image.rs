@@ -1,7 +1,6 @@
-use mongodb::db::Database;
 use serde_json::{self};
 
-use common::{Result, Error};
+use common::{Context, Result, Error};
 use common::structs::Image;
 use database::{self};
 
@@ -24,7 +23,7 @@ fn validate(obj: &str) -> Result<Image> {
 /*
  * Handle a 'createimg' command
  */
-pub fn create(db: &Database, obj: &str) -> Result<String> {
+pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let img = try!(validate(&obj));
 
     // Check required parameters
@@ -35,15 +34,15 @@ pub fn create(db: &Database, obj: &str) -> Result<String> {
         return Err(Error::new("A 'file' parameter is required"));
     }
 
-    try!(database::image::create(db, img));
+    try!(database::image::create(&ctx.db, img));
     Ok(String::new())
 }
 
 /*
  * Handle a 'listimg' command
  */
-pub fn list(db: &Database) -> Result<String> {
-    let imgs = try!(database::image::list(db));
+pub fn list(ctx: &Context) -> Result<String> {
+    let imgs = try!(database::image::list(&ctx.db));
     let s = try!(serde_json::to_string(&imgs));
 
     Ok(s)
@@ -52,8 +51,8 @@ pub fn list(db: &Database) -> Result<String> {
 /*
  * Handle a 'getimg' command
  */
-pub fn get(db: &Database, name: &str) -> Result<String> {
-    let img = try!(database::image::get(db, name));
+pub fn get(ctx: &Context, name: &str) -> Result<String> {
+    let img = try!(database::image::get(&ctx.db, name));
     let s = try!(serde_json::to_string(&img));
 
     Ok(s)
@@ -62,9 +61,9 @@ pub fn get(db: &Database, name: &str) -> Result<String> {
 /*
  * Handle a 'updateimg' command
  */
-pub fn update(db: &Database, obj: &str) -> Result<String> {
+pub fn update(ctx: &Context, obj: &str) -> Result<String> {
     let img = try!(validate(&obj));
-    try!(database::image::update(db, img));
+    try!(database::image::update(&ctx.db, img));
 
     Ok(String::new())
 }
@@ -72,7 +71,7 @@ pub fn update(db: &Database, obj: &str) -> Result<String> {
 /*
  * Handle a 'delimg' command
  */
-pub fn delete(db: &Database, name: &str) -> Result<String> {
-    try!(database::image::delete(db, name));
+pub fn delete(ctx: &Context, name: &str) -> Result<String> {
+    try!(database::image::delete(&ctx.db, name));
     Ok(String::new())
 }

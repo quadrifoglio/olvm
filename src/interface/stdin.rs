@@ -4,8 +4,7 @@
 
 use std::io::{self, BufReader, BufRead, Write};
 
-use mongodb::db::Database;
-
+use common::Context;
 use handler::{self};
 
 /*
@@ -19,7 +18,7 @@ fn prompt() {
 /*
  * Start reading commands from stdin
  */
-pub fn run(db: &Database) {
+pub fn run(ctx: &Context) {
     prompt();
 
     let r = BufReader::new(io::stdin());
@@ -34,7 +33,7 @@ pub fn run(db: &Database) {
 
         let (command, obj) = super::parse_command(line);
 
-        match handler::handle(db, command.as_str(), obj.as_str()) {
+        match handler::handle(ctx, command.as_str(), obj.as_str()) {
             Ok(result) => println!("{}", result),
             Err(e) => println!("{}", e)
         };

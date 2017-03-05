@@ -36,10 +36,10 @@ fn main() {
         db: db
     };
 
-    if let Some(udp) = ctx.conf.udp {
-        interface::udp::run(udp.addr.as_str(), &ctx.db);
+    if ctx.conf.udp.is_some() {
+        interface::udp::run(&ctx);
     }
     else {
-        interface::stdin::run(&ctx.db);
+        interface::stdin::run(&ctx);
     }
 }
