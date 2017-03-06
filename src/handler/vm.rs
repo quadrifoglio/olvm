@@ -42,7 +42,14 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
 
     // Create the VM
     try!(database::vm::create(&ctx.db, &vm));
-    try!(backend::vm::script_create(ctx, &mut vm));
+
+    match backend::vm::script_create(ctx, &mut vm) {
+        Ok(_) => {},
+        Err(e) => {
+            let _ = database::vm::delete(&ctx.db, vm.name.as_str());
+            return Err(e);
+        }
+    };
 
     Ok(String::new())
 }
@@ -68,17 +75,6 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
 }
 
 /*
- * Handle a 'startvm' command
- */
-pub fn start(ctx: &Context, name: &str) -> Result<String> {
-    let mut vm = try!(database::vm::get(&ctx.db, name));
-
-    try!(backend::vm::script_start(ctx, &mut vm));
-
-    Ok(String::new())
-}
-
-/*
  * Handle a 'updatevm' command
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
@@ -96,6 +92,28 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
 
     try!(database::vm::delete(&ctx.db, name));
     try!(backend::vm::script_delete(ctx, &mut vm));
+
+    Ok(String::new())
+}
+
+/*
+ * Handle a 'startvm' command
+ */
+pub fn start(ctx: &Context, name: &str) -> Result<String> {
+    let mut vm = try!(database::vm::get(&ctx.db, name));
+
+    try!(backend::vm::script_start(ctx, &mut vm));
+
+    Ok(String::new())
+}
+
+/*
+ * Handle a 'stopvm' command
+ */
+pub fn stop(ctx: &Context, name: &str) -> Result<String> {
+    let mut vm = try!(database::vm::get(&ctx.db, name));
+
+    try!(backend::vm::script_stop(ctx, &mut vm));
 
     Ok(String::new())
 }

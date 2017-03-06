@@ -23,6 +23,8 @@ pub fn handle(ctx: &Context, cmd: &str, obj: &str) -> Result<String> {
         "getvm" => return vm::get(ctx, obj),
         "updatevm" => return vm::update(ctx, obj),
         "delvm" => return vm::delete(ctx, obj),
+        "startvm" => return vm::start(ctx, obj),
+        "stopvm" => return vm::stop(ctx, obj),
 
         _ => return Err(Error::new("Unknown command"))
     }
