@@ -22,7 +22,11 @@ fn send(socket: &UdpSocket, dst: SocketAddr, mut buf: String) -> Result<()> {
 
 fn command(ctx: &Context, socket: &UdpSocket, src: SocketAddr, buf: Vec<u8>) -> Result<()> {
     // Parse and handle the command
-    let s = try!(String::from_utf8(buf).ok().ok_or(Error::new("Failed to read string from UDP packet")));
+    let s = match String::from_utf8(buf) {
+        Ok(s) => s,
+        Err(e) => return Err(Error::new(format!("Read string from UDP packet: {}", e)))
+    };
+
     let (command, obj) = super::parse_command(s);
 
     // Ignore empty commands

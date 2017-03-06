@@ -68,6 +68,17 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
 }
 
 /*
+ * Handle a 'startvm' command
+ */
+pub fn start(ctx: &Context, name: &str) -> Result<String> {
+    let mut vm = try!(database::vm::get(&ctx.db, name));
+
+    try!(backend::vm::script_start(ctx, &mut vm));
+
+    Ok(String::new())
+}
+
+/*
  * Handle a 'updatevm' command
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
