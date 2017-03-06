@@ -15,10 +15,12 @@ use common::{Result, Error};
  */
 pub fn script(path: &str, obj: &str) -> Result<HashMap<String, String>> {
     // Execute the script
+    println!("started {} {}", path, obj);
     let out = match Command::new(path).arg(obj).output() {
         Ok(out) => out,
         Err(e) => return Err(Error::new(format!("script: exec: {}", e)))
     };
+    println!("after");
 
     // If the script did not exit with status 0, print stderr
     if !out.status.success() {
