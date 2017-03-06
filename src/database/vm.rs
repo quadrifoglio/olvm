@@ -3,6 +3,7 @@
  */
 
 use std::vec::Vec;
+use std::collections::HashMap;
 
 use mongodb::db::{Database, ThreadedDatabase};
 use bson::Document;
@@ -47,6 +48,21 @@ pub fn get(db: &Database, name: &str) -> Result<VM> {
     }
 
     Err(Error::new("VM not found"))
+}
+
+/*
+ * Store the custom parameters returned by a VM backend script
+ */
+pub fn params(db: &Database, vm: &mut VM, params: HashMap<String, String>) -> Result<()> {
+    if params.len() > 0 {
+        for (key, val) in params {
+            vm.parameters.insert(key.to_string(), val.to_string());
+        }
+
+        try!(update(db, vm));
+    }
+
+    Ok(())
 }
 
 /*

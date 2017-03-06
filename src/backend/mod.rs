@@ -3,6 +3,7 @@
  */
 
 pub mod image;
+pub mod vm;
 
 use std::process::Command;
 use std::collections::HashMap;

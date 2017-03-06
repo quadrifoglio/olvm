@@ -3,6 +3,7 @@ use serde_json;
 use common::{Context, Result, Error};
 use common::structs::VM;
 use database;
+use backend;
 
 /*
  * Validates the user-specified parameters for VM creation
@@ -33,14 +34,16 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
  */
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     // Validate and retreive VM info from the client-specified parameters
-    let vm = try!(validate(ctx, &obj));
+    let mut vm = try!(validate(ctx, &obj));
 
     if let Ok(_) = database::vm::get(&ctx.db, vm.name.as_str()) {
         return Err(Error::new("This VM name is not available"));
     }
 
-    // Create the image
+    // Create the VM
     try!(database::vm::create(&ctx.db, &vm));
+    try!(backend::vm::script_create(ctx, &mut vm));
+
     Ok(String::new())
 }
 
@@ -78,6 +81,10 @@ pub fn update(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'delvm' command
  */
 pub fn delete(ctx: &Context, name: &str) -> Result<String> {
+    let mut vm = try!(database::vm::get(&ctx.db, name));
+
     try!(database::vm::delete(&ctx.db, name));
+    try!(backend::vm::script_delete(ctx, &mut vm));
+
     Ok(String::new())
 }

@@ -3,6 +3,7 @@
  */
 
 use std::vec::Vec;
+use std::collections::HashMap;
 
 use bson::Document;
 use mongodb::db::{Database, ThreadedDatabase};
@@ -47,6 +48,21 @@ pub fn get(db: &Database, name: &str) -> Result<Image> {
     }
 
     Err(Error::new("Image not found"))
+}
+
+/*
+ * Store the custom parameters returned by an image backend script
+ */
+pub fn params(db: &Database, img: &mut Image, params: HashMap<String, String>) -> Result<()> {
+    if params.len() > 0 {
+        for (key, val) in params {
+            img.parameters.insert(key.to_string(), val.to_string());
+        }
+
+        try!(update(db, img));
+    }
+
+    Ok(())
 }
 
 /*
