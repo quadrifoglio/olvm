@@ -11,6 +11,8 @@ if not 'parameters' in vm or not 'pid' in vm['parameters'] or vm['parameters']['
     sys.exit(0)
 
 pid = int(vm['parameters']['pid'])
-os.kill(pid, signal.SIGTERM)
 
-print "pid", 0
+try:
+    os.kill(pid, signal.SIGTERM)
+finally:
+    print "pid", 0
