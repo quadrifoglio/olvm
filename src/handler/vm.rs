@@ -46,6 +46,8 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     match backend::vm::script_create(ctx, &mut vm) {
         Ok(_) => {},
         Err(e) => {
+            println!("{}", e);
+
             let _ = database::vm::delete(&ctx.db, vm.name.as_str());
             return Err(e);
         }
@@ -102,7 +104,13 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
 pub fn start(ctx: &Context, name: &str) -> Result<String> {
     let mut vm = try!(database::vm::get(&ctx.db, name));
 
-    try!(backend::vm::script_start(ctx, &mut vm));
+    match backend::vm::script_start(ctx, &mut vm) {
+        Ok(_) => {},
+        Err(e) => {
+            println!("{}", e);
+            return Err(e);
+        }
+    };
 
     Ok(String::new())
 }
@@ -113,7 +121,11 @@ pub fn start(ctx: &Context, name: &str) -> Result<String> {
 pub fn stop(ctx: &Context, name: &str) -> Result<String> {
     let mut vm = try!(database::vm::get(&ctx.db, name));
 
-    try!(backend::vm::script_stop(ctx, &mut vm));
-
-    Ok(String::new())
+    match backend::vm::script_stop(ctx, &mut vm) {
+        Ok(_) => Ok(String::new()),
+        Err(e) => {
+            println!("{}", e);
+            Err(e)
+        }
+    }
 }
