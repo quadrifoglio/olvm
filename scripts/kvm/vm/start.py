@@ -10,25 +10,10 @@ vm = json.loads(sys.argv[1])
 folder = '/var/lib/olvm/vm/' + vm['name']
 disk = folder + '/disk.qcow2'
 
-try:
-    ps = subprocess.Popen(['qemu-system-x86_64', '-nographic', '-drive', 'file='+disk],
-        stdin=None,
-        stdout=None,
-        stderr=None,
-        close_fds=True
-    )
+child = subprocess.Popen(["/usr/bin/qemu-system-x86_64", "-nographic"],
+    stdout = subprocess.PIPE,
+    stderr = subprocess.PIPE
+)
 
-    print "pid", ps.pid
-
-    #time.sleep(2)
-    #ps.poll()
-
-    #if ps.returncode == None:
-    #    print "pid", ps.pid
-    #else:
-    #    sys.stderr.write("qemu-system-x86_64 has exited with status " + str(ps.returncode))
-
-    #sys.exit(0)
-
-except subprocess.CalledProcessError:
-    sys.exit(1)
+print "pid", child.pid
+sys.exit(0)

@@ -10,5 +10,7 @@ vm = json.loads(sys.argv[1])
 if not 'parameters' in vm or not 'pid' in vm['parameters'] or vm['parameters']['pid'] == 0:
     sys.exit(0)
 
-pid = vm['parameters']['pid']
+pid = int(vm['parameters']['pid'])
 os.kill(pid, signal.SIGTERM)
+
+print "pid", 0
