@@ -36,6 +36,9 @@ if 'vnc' in params:
     else:
         opts.append(params['vnc'])
 
+if 'args' in params:
+    opts.append(params['args'])
+
 child = subprocess.Popen(opts, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 
 time.sleep(2)
