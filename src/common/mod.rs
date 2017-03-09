@@ -3,6 +3,7 @@ pub mod structs;
 use std;
 use std::error::Error as StdError;
 use std::fmt;
+use std::io;
 
 use serde_json;
 use mongodb;
@@ -51,6 +52,12 @@ impl fmt::Display for Error {
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Error: {}", self.message)
+    }
+}
+
+impl std::convert::From<io::Error> for Error {
+    fn from(e: io::Error) -> Error {
+        Error::new(format!("I/O error: {}", e.description()))
     }
 }
 

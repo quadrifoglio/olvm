@@ -3,7 +3,7 @@
  */
 
 use std::error::Error as StdError;
-use std::net::{UdpSocket, SocketAddr};
+use std::net::{UdpSocket, SocketAddr, IpAddr, Ipv4Addr};
 
 use dhcp::codes;
 use dhcp::common::{Frame, Option};
@@ -17,6 +17,8 @@ pub fn listen() -> Result<()> {
         Err(e) => return Err(Error::new(e.description()))
     };
 
+    try!(socket.set_broadcast(true));
+
     // Forever
     loop {
         // 1024 bytes buffer
@@ -24,10 +26,10 @@ pub fn listen() -> Result<()> {
 
         // On each datagram
         match socket.recv_from(&mut buf) {
-            Ok((len, src)) => {
+            Ok((len, _)) => {
                 // Handle the request
                 let frame = match Frame::parse(&buf[..len]) {
-                    Ok(frame) => handle(&socket, src, frame),
+                    Ok(frame) => handle(&socket, frame),
                     Err(e) => {
                         println!("Failed to parse DHCP frame: {}", e);
                         continue;
@@ -40,8 +42,46 @@ pub fn listen() -> Result<()> {
 
 }
 
-fn handle(socket: &UdpSocket, src: SocketAddr, req: Frame) {
+fn handle(socket: &UdpSocket, req: Frame) {
     let mut resp = Frame::new(codes::BOOTP_RESPONSE, req.xid);
+    resp.yiaddr = vec![192, 168, 1, 1];
+    resp.siaddr = vec![192, 168, 1, 253];
+    resp.chaddr = req.chaddr.clone();
+    resp.flags = 0x8000;
+
+    let req_type = match req.option(codes::OPTION_DHCP_MSG_TYPE) {
+        Some(opt) => {
+            let ref data = opt.data;
+            data[0]
+        },
+        None => {
+            println!("Invalid DHCP request: missing OPTION_DHCP_MSG_TYPE");
+            return;
+        }
+    };
+
+    let t = match req_type {
+        1 => {
+            // If its a DHCP Discover, reply with DHCP Offer
+            let mut t = Option::new(codes::OPTION_DHCP_MSG_TYPE);
+            t.set_data(vec![2]);
+
+            t
+        },
+        3 => {
+            // If its a DHCP Request, reply with DHCP ACK
+            let mut t = Option::new(codes::OPTION_DHCP_MSG_TYPE);
+            t.set_data(vec![5]);
+
+            t
+        },
+        _ => {
+            println!("Invalid DHCP request: invalid OPTION_DHCP_MSG_TYPE: {}", req_type);
+            return;
+        }
+    };
+
+    resp.add_option(t);
 
     // Set the subnet mask
     let mut mask = Option::new(codes::OPTION_SUBNET_MASK);
@@ -63,9 +103,14 @@ fn handle(socket: &UdpSocket, src: SocketAddr, req: Frame) {
         }
     };
 
+    resp.add_option(Option::new(codes::OPTION_END));
+
     match resp.to_bytes() {
         Ok(buf) => {
-            match socket.send_to(buf.as_slice(), src) {
+            let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(255, 255, 255, 255)), 68);
+            let data = buf.as_slice();
+
+            match socket.send_to(data, addr) {
                 Ok(_) => {},
                 Err(e) => println!("Failed to send DHCP response: {}", e)
             };
