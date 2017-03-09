@@ -7,6 +7,7 @@ extern crate bson;
 extern crate mongodb;
 
 extern crate toml;
+extern crate dhcp;
 
 mod common;
 mod config;
@@ -14,6 +15,9 @@ mod interface;
 mod database;
 mod backend;
 mod handler;
+mod net;
+
+use std::thread;
 
 fn main() {
     // Open and parse configuration file
@@ -39,6 +43,14 @@ fn main() {
         conf: conf,
         db: db
     };
+
+    // Start the internal DHCP server
+    thread::spawn(|| {
+        match net::dhcp::listen() {
+            Ok(_) => {},
+            Err(e) => println!("Failed to start DHCP server: {}", e)
+        };
+    });
 
     // Start the chosen interface, UDP or stdin
     if ctx.conf.udp.is_some() {
