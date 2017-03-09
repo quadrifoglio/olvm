@@ -1,12 +1,13 @@
 use std::error::Error as StdError;
 use std::collections::HashMap;
+use std::vec::Vec;
 
 use serde_json;
 use bson::{self, Document, Bson};
 
 use common::{Result, Error};
 
-fn default_node() -> i32 {
+fn default_i32() -> i32 {
     0
 }
 
@@ -19,7 +20,7 @@ pub struct Image {
 
     pub backend: String,
 
-    #[serde(default = "default_node")]
+    #[serde(default = "default_i32")]
     pub node: i32,
 
     pub file: String,
@@ -69,7 +70,7 @@ impl Image {
 pub struct VM {
     pub name: String,
 
-    #[serde(default = "default_node")]
+    #[serde(default = "default_i32")]
     pub node: i32,
 
     pub backend: String,
@@ -92,6 +93,60 @@ impl VM {
     pub fn from_bson(doc: Document) -> Result<VM> {
         match bson::from_bson::<VM>(Bson::Document(doc)) {
             Ok(vm) => Ok(vm),
+            Err(e) => Err(Error::new(e.description()))
+        }
+    }
+
+    pub fn to_json(&self) -> Result<String> {
+        let json = match serde_json::to_string(self) {
+            Ok(json) => json,
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        Ok(json)
+    }
+
+    pub fn to_bson(&self) -> Result<Document> {
+        let doc = match bson::to_bson(self) {
+            Ok(bson) => try!(bson.as_document().ok_or(Error::new("Invalid document"))).clone(),
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        Ok(doc)
+    }
+}
+
+/*
+ * Data structure to represent a network
+ */
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Network {
+    pub name: String,
+
+    #[serde(default = "String::new")]
+    pub cidr: String,
+
+    #[serde(default = "String::new")]
+    pub bridge: String,
+
+    #[serde(default = "String::new")]
+    pub router: String,
+
+    #[serde(default = "Vec::new")]
+    pub dns: Vec<String>
+}
+
+impl Network {
+    pub fn from_json(s: &str) -> Result<Network> {
+        match serde_json::from_str(s) {
+            Ok(net) => Ok(net),
+            Err(e) => Err(Error::new(format!("Failed to parse JSON into an Network structure: {}", e)))
+        }
+    }
+
+    pub fn from_bson(doc: Document) -> Result<Network> {
+        match bson::from_bson::<Network>(Bson::Document(doc)) {
+            Ok(net) => Ok(net),
             Err(e) => Err(Error::new(e.description()))
         }
     }
