@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Quadrifoglio <clement@dreamvids.fr>"]
 
 [dependencies]
+regex = "0.2"
 serde = "0.9.10"
 serde_derive = "0.9.1"
 serde_json = "0.9.8"

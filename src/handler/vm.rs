@@ -26,6 +26,12 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
         }
     }
 
+    for iface in &vm.interfaces {
+        if let Err(_) = database::network::get(&ctx.db, iface.network.as_str()) {
+            return Err(Error::new(format!("Interface: network '{}' not found", iface.network)));
+        }
+    }
+
     Ok(vm)
 }
 

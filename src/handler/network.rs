@@ -3,18 +3,33 @@ use serde_json;
 use common::{Context, Result, Error};
 use common::structs::Network;
 use database;
+use net;
 
 /*
  * Validates the user-specified parameters for network creation/update
  */
 fn validate(obj: &str) -> Result<Network> {
-    let mut net = try!(Network::from_json(obj));
+    let net = try!(Network::from_json(obj));
 
     if net.name.len() == 0 {
         return Err(Error::new("A 'name' is required"));
     }
-    if net.bridge.len() == 0 {
-        net.bridge = format!("net{}", net.name);
+    if net.cidr.len() > 0 {
+        if !net::is_valid_cidr(net.cidr.as_str()) {
+            return Err(Error::new("Invalid CIDR network address"));
+        }
+    }
+    if net.router.len() > 0 {
+        if !net::is_valid_ip(net.router.as_str()) {
+            return Err(Error::new("Invalid router IP address"));
+        }
+    }
+    if net.dns.len() > 0 {
+        for dns in &net.dns {
+            if !net::is_valid_ip(dns) {
+                return Err(Error::new("Invalid router IP address"));
+            }
+        }
     }
 
     Ok(net)

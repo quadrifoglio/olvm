@@ -64,6 +64,18 @@ impl Image {
 }
 
 /*
+ * Data structure to represent a network interface attached to a VM
+ */
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Interface {
+    pub network: String, // Name of the network to connect the interface to
+    pub ip: String, // Interface's IPv4 address
+
+    #[serde(default = "String::new")]
+    pub mac: String, // MAC address, set this to override the random default address
+}
+
+/*
  * Data structure to represent a vm in database
  */
 #[derive(Serialize, Deserialize, Debug)]
@@ -77,6 +89,9 @@ pub struct VM {
 
     #[serde(default = "String::new")]
     pub image: String, // Name of the image the VM is based on (if any)
+
+    #[serde(default = "Vec::new")]
+    pub interfaces: Vec<Interface>,
 
     #[serde(default = "HashMap::new")]
     pub parameters: HashMap<String, String>
@@ -124,16 +139,13 @@ pub struct Network {
     pub name: String,
 
     #[serde(default = "String::new")]
-    pub cidr: String,
+    pub cidr: String, // CIDR network address (example: 192.168.1.0/24)
 
     #[serde(default = "String::new")]
-    pub bridge: String,
-
-    #[serde(default = "String::new")]
-    pub router: String,
+    pub router: String, // DHCP: Exit router
 
     #[serde(default = "Vec::new")]
-    pub dns: Vec<String>
+    pub dns: Vec<String> // DHCP: List of available nameservers
 }
 
 impl Network {

@@ -19,6 +19,8 @@ pub fn listen() -> Result<()> {
 
     try!(socket.set_broadcast(true));
 
+    println!("DHCP server started...");
+
     // Forever
     loop {
         // 1024 bytes buffer
