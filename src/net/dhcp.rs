@@ -43,11 +43,8 @@ pub fn listen() -> Result<()> {
 }
 
 fn handle(socket: &UdpSocket, req: Frame) {
-    let mut resp = Frame::new(codes::BOOTP_RESPONSE, req.xid);
-    resp.yiaddr = vec![192, 168, 1, 1];
-    resp.siaddr = vec![192, 168, 1, 253];
-    resp.chaddr = req.chaddr.clone();
-    resp.flags = 0x8000;
+    // Constructs a new DHCP response
+    let mut resp = Frame::response(req.xid, req.chaddr.clone(), vec![192, 168, 1, 1], vec![192, 168, 1, 253]);
 
     let req_type = match req.option(codes::OPTION_DHCP_MSG_TYPE) {
         Some(opt) => {
@@ -61,17 +58,17 @@ fn handle(socket: &UdpSocket, req: Frame) {
     };
 
     let t = match req_type {
-        1 => {
+        codes::DHCP_DISCOVER => {
             // If its a DHCP Discover, reply with DHCP Offer
             let mut t = Option::new(codes::OPTION_DHCP_MSG_TYPE);
-            t.set_data(vec![2]);
+            t.set_data_u8(codes::DHCP_OFFER);
 
             t
         },
-        3 => {
+        codes::DHCP_REQUEST => {
             // If its a DHCP Request, reply with DHCP ACK
             let mut t = Option::new(codes::OPTION_DHCP_MSG_TYPE);
-            t.set_data(vec![5]);
+            t.set_data_u8(codes::DHCP_ACK);
 
             t
         },
@@ -85,12 +82,12 @@ fn handle(socket: &UdpSocket, req: Frame) {
 
     // Set the subnet mask
     let mut mask = Option::new(codes::OPTION_SUBNET_MASK);
-    mask.set_data(vec![255, 255, 255, 0]);
+    mask.set_data_ip(255, 255, 255, 0);
     resp.add_option(mask);
 
     // Set the router
     let mut router = Option::new(codes::OPTION_ROUTER);
-    router.set_data(vec![192, 168, 1, 254]);
+    router.set_data_ip(192, 168, 1, 254);
     resp.add_option(router);
 
     // Set the lease time
@@ -107,6 +104,7 @@ fn handle(socket: &UdpSocket, req: Frame) {
 
     match resp.to_bytes() {
         Ok(buf) => {
+            // Broadcast the response
             let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(255, 255, 255, 255)), 68);
             let data = buf.as_slice();
 
