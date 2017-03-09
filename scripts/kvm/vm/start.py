@@ -7,6 +7,7 @@ import subprocess
 
 vm = json.loads(sys.argv[1])
 params = vm['parameters']
+ifaces = vm['interfaces']
 
 folder = '/var/lib/olvm/vm/' + vm['name']
 disk = folder + '/disk.qcow2'
@@ -38,6 +39,17 @@ if 'vnc' in params:
 
 if 'args' in params:
     opts.append(params['args'])
+
+if len(ifaces) > 0:
+    index = 0
+    for iface in ifaces:
+        opts.append('-netdev')
+        opts.append('tap,id=net' + str(index) + ',ifname=vm' + vm['name'] + '.' + str(index))
+
+        opts.append('-device')
+        opts.append('driver=virtio-net,netdev=net' + str(index))
+
+        index = index + 1
 
 child = subprocess.Popen(opts, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 

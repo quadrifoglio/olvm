@@ -42,6 +42,9 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let net = try!(validate(&obj));
     try!(database::network::create(&ctx.db, &net));
 
+    let netname = net::net_dev(net.name.as_str());
+    try!(net::system::bridge_create(netname.as_str()));
+
     Ok(String::new())
 }
 
@@ -82,6 +85,9 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
     let net = try!(database::network::get(&ctx.db, name));
 
     try!(database::network::delete(&ctx.db, net.name.as_str()));
+
+    let netname = net::net_dev(net.name.as_str());
+    try!(net::system::bridge_delete(netname.as_str()));
 
     Ok(String::new())
 }

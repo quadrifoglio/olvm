@@ -2,6 +2,7 @@
  * Network module - Networking utilities (bridge, TAP, DHCP, ebtables...)
  */
 
+pub mod system;
 pub mod dhcp;
 
 use regex::Regex;
@@ -28,6 +29,17 @@ pub fn is_valid_cidr(cidr: &str) -> bool {
 /*
  * Returns the bridge interface name corresponding to a network name
  */
-pub fn network_bridge(name: &str) -> String {
+pub fn net_dev(name: &str) -> String {
     format!("net{}", name)
+}
+
+/*
+ * Returns the interface name corresponding to a VM's nth network interface
+ */
+pub fn iface_dev(mut vm: &str, index: i32) -> String {
+    if vm.len() > 10 {
+        vm = &vm[..10];
+    }
+
+    format!("vm{}.{}", vm, index)
 }

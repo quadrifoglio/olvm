@@ -4,9 +4,10 @@ use common::{Context, Result, Error};
 use common::structs::VM;
 use database;
 use backend;
+use net;
 
 /*
- * Validates the user-specified parameters for VM creation
+ * Validates the user-specified parameters for VM creation, and sets up the VM's network interfaces
  */
 fn validate(ctx: &Context, obj: &str) -> Result<VM> {
     let vm = try!(VM::from_json(obj));
@@ -26,10 +27,20 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
         }
     }
 
+    let mut index = 0;
     for iface in &vm.interfaces {
-        if let Err(_) = database::network::get(&ctx.db, iface.network.as_str()) {
-            return Err(Error::new(format!("Interface: network '{}' not found", iface.network)));
-        }
+        match database::network::get(&ctx.db, iface.network.as_str()) {
+            Ok(net) => {
+                let ifname = net::iface_dev(vm.name.as_str(), index);
+                let netname = net::net_dev(net.name.as_str());
+
+                try!(net::system::tap_create(ifname.as_str()));
+                try!(net::system::bridge_addif(ifname.as_str(), netname.as_str()));
+            },
+            Err(_) => return Err(Error::new(format!("Interface: network '{}' not found", iface.network)))
+        };
+
+        index = index + 1;
     }
 
     Ok(vm)
@@ -100,6 +111,14 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
 
     try!(database::vm::delete(&ctx.db, name));
     try!(backend::vm::script_delete(ctx, &mut vm));
+
+    let mut index = 0;
+    for iface in &vm.interfaces {
+        let ifname = net::iface_dev(vm.name.as_str(), index);
+        try!(net::system::tap_delete(ifname.as_str()));
+
+        index = index + 1;
+    }
 
     Ok(String::new())
 }
