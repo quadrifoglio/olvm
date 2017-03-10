@@ -7,6 +7,7 @@ pub mod dhcp;
 
 use std::sync::Arc;
 
+use uuid::{Uuid, UuidVersion};
 use regex::Regex;
 
 use common::{Context, Result};
@@ -36,6 +37,16 @@ pub fn setup(ctx: Arc<Context>) -> Result<()> {
     }
 
     dhcp::listen(ctx)
+}
+
+/*
+ * Generate a random MAC address
+ */
+pub fn rand_mac() -> String {
+    let u = Uuid::new(UuidVersion::Random).unwrap();
+    let bytes = u.as_bytes();
+
+    format!("52:54:01:{:02x}:{:02x}:{:02x}", bytes[0], bytes[1], bytes[2])
 }
 
 /*

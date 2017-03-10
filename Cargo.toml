@@ -12,5 +12,7 @@ toml = "0.3.1"
 bson = "0.4.4"
 mongodb = "0.2.3"
 
+uuid = { version = "0.4", features = ["v4"] }
+
 [dependencies.dhcp]
 path = "../dhcp-rs"

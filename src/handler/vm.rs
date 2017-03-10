@@ -57,6 +57,13 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
         return Err(Error::new("This VM name is not available"));
     }
 
+    // Check interfaces and generate MAC addresses
+    for iface in &mut vm.interfaces {
+        if iface.mac.len() == 0 {
+            iface.mac = net::rand_mac();
+        }
+    }
+
     // Create the VM
     try!(database::vm::create(&ctx.db, &vm));
 

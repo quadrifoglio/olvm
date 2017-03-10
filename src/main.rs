@@ -6,6 +6,7 @@ extern crate serde_json;
 extern crate bson;
 extern crate mongodb;
 
+extern crate uuid;
 extern crate regex;
 extern crate toml;
 extern crate dhcp;
