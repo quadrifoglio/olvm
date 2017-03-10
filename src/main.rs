@@ -19,6 +19,7 @@ mod handler;
 mod net;
 
 use std::thread;
+use std::sync::Arc;
 
 fn main() {
     // Open and parse configuration file
@@ -40,16 +41,18 @@ fn main() {
     };
 
     // Create global context, shared everywhere
-    let ctx = common::Context {
+    let ctx = Arc::new(common::Context {
         conf: conf,
         db: db
-    };
+    });
 
-    // Start the internal DHCP server
-    thread::spawn(|| {
-        match net::dhcp::listen() {
+    let rctx = ctx.clone();
+
+    // Setup networking (virtual devices, dhcp server...)
+    thread::spawn(move || {
+        match net::setup(rctx) {
             Ok(_) => {},
-            Err(e) => println!("Failed to start DHCP server: {}", e)
+            Err(e) => println!("Failed to setup networking: {}", e)
         };
     });
 

@@ -83,7 +83,12 @@ pub fn bridge_delete(name: &str) -> Result<()> {
 pub fn tap_create(name: &str) -> Result<()> {
     let exists = try!(Command::new("ip").arg("tuntap").arg("show").arg(name).output());
 
-    if !exists.status.success() {
+    let stdout = match String::from_utf8(exists.stdout) {
+        Ok(stdout) => stdout,
+        Err(_) => return Err(Error::new("Failed to read stdout as a string"))
+    };
+
+    if !exists.status.success() || !stdout.contains(name) {
         let out = try!(Command::new("ip")
             .arg("tuntap").arg("add").arg(name)
             .arg("mode").arg("tap").output());

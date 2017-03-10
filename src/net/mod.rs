@@ -5,7 +5,38 @@
 pub mod system;
 pub mod dhcp;
 
+use std::sync::Arc;
+
 use regex::Regex;
+
+use common::{Context, Result};
+use database;
+
+/*
+ * Setup the networking module: create network interfaces, start DHCP server
+ */
+pub fn setup(ctx: Arc<Context>) -> Result<()> {
+    let nets = try!(database::network::list(&ctx.db));
+
+    for net in nets {
+        let netdev = net_dev(net.name.as_str());
+        try!(system::bridge_create(netdev.as_str()));
+    }
+
+    let vms = try!(database::vm::list(&ctx.db));
+
+    for vm in vms {
+        let mut index = 0;
+        for iface in vm.interfaces {
+            let tap = iface_dev(vm.name.as_str(), index);
+            try!(system::tap_create(tap.as_str()));
+
+            index = index + 1;
+        }
+    }
+
+    dhcp::listen()
+}
 
 /*
  * Check is the specified string is a valid IP address

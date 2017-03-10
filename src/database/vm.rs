@@ -6,7 +6,7 @@ use std::vec::Vec;
 use std::collections::HashMap;
 
 use mongodb::db::{Database, ThreadedDatabase};
-use bson::Document;
+use bson::{self, Document, Array};
 
 use common::{Result, Error};
 use common::structs::VM;
@@ -71,12 +71,18 @@ pub fn params(db: &Database, vm: &mut VM, params: HashMap<String, String>) -> Re
 pub fn update(db: &Database, vm: &VM) -> Result<()> {
     let name = vm.name.as_str();
 
+    let mut i = Array::new();
+    for iface in &vm.interfaces {
+        i.push(bson::to_bson(&iface).unwrap());
+    }
+
     let mut p = Document::new();
     for (k, v) in &vm.parameters {
         p.insert(k.clone(), v.clone());
     }
 
     let update = doc! {
+        "interfaces" => i,
         "parameters" => p
     };
 
