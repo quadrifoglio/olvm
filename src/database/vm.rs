@@ -51,6 +51,37 @@ pub fn get(db: &Database, name: &str) -> Result<VM> {
 }
 
 /*
+ * Get a VM by its MAC address
+ */
+pub fn get_mac(db: &Database, mac: &str) -> Result<(VM, usize)> {
+    let cursor = try!(db.collection("vms").find(None, None));
+
+    for result in cursor {
+        if let Ok(doc) = result {
+            let vm = try!(VM::from_bson(doc));
+
+            let mut found = false;
+            let mut index = 0;
+
+            for iface in &vm.interfaces {
+                if iface.mac.as_str() == mac {
+                    found = true;
+                    break;
+                }
+
+                index = index + 1;
+            }
+
+            if found {
+                return Ok((vm, index));
+            }
+        }
+    }
+
+    Err(Error::new("VM not found"))
+}
+
+/*
  * Store the custom parameters returned by a VM backend script
  */
 pub fn params(db: &Database, vm: &mut VM, params: HashMap<String, String>) -> Result<()> {

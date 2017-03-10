@@ -35,7 +35,7 @@ pub fn setup(ctx: Arc<Context>) -> Result<()> {
         }
     }
 
-    dhcp::listen()
+    dhcp::listen(ctx)
 }
 
 /*

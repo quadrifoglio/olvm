@@ -15,7 +15,7 @@ disk = folder + '/disk.qcow2'
 opts = [
     '/usr/bin/qemu-system-x86_64',
     '-nographic',
-    '-drive', 'format=qcow2,file=' + disk
+    '-drive', 'file=' + disk
 ]
 
 if 'acceleration' in params:

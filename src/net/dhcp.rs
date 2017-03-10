@@ -4,13 +4,16 @@
 
 use std::error::Error as StdError;
 use std::net::{UdpSocket, SocketAddr, IpAddr, Ipv4Addr};
+use std::str::FromStr;
+use std::sync::Arc;
 
 use dhcp::codes;
 use dhcp::common::{Frame, Option};
 
-use common::{Result, Error};
+use database;
+use common::{Context, Result, Error};
 
-pub fn listen() -> Result<()> {
+pub fn listen(ctx: Arc<Context>) -> Result<()> {
     // Bind the socket
     let socket = match UdpSocket::bind("0.0.0.0:67") {
         Ok(socket) => socket,
@@ -31,7 +34,7 @@ pub fn listen() -> Result<()> {
             Ok((len, _)) => {
                 // Handle the request
                 let frame = match Frame::parse(&buf[..len]) {
-                    Ok(frame) => handle(&socket, frame),
+                    Ok(frame) => handle(ctx.clone(), &socket, frame),
                     Err(e) => {
                         println!("Failed to parse DHCP frame: {}", e);
                         continue;
@@ -44,9 +47,25 @@ pub fn listen() -> Result<()> {
 
 }
 
-fn handle(socket: &UdpSocket, req: Frame) {
+fn handle(ctx: Arc<Context>, socket: &UdpSocket, req: Frame) {
+    // Get the VM interface's IP from database to offer it in DHCP response
+    let ip = match database::vm::get_mac(&ctx.db, req.client_mac_string().as_str()) {
+        Ok((vm, index)) => {
+            let iface = vm.interfaces.get(index).unwrap(); // Unwrapping is ok, checked in database::vm::get_mac
+
+            match Ipv4Addr::from_str(iface.ip.as_str()) {
+                Ok(ip) => ip,
+                Err(_) => {
+                    println!("Failed to parse IP: {}", iface.ip);
+                    return;
+                }
+            }
+        },
+        Err(_) => return // Ignore the request if the MAC address is not found
+    };
+
     // Constructs a new DHCP response
-    let mut resp = Frame::response(req.xid, req.chaddr.clone(), vec![192, 168, 1, 1], vec![192, 168, 1, 253]);
+    let mut resp = Frame::response(req.xid, req.chaddr.clone(), ip.octets().to_vec(), vec![192, 168, 1, 253]);
 
     let req_type = match req.option(codes::OPTION_DHCP_MSG_TYPE) {
         Some(opt) => {
