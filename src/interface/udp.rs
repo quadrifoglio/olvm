@@ -34,7 +34,9 @@ fn command(ctx: &Context, socket: &UdpSocket, src: SocketAddr, buf: Vec<u8>) -> 
         return Ok(());
     }
 
-    try!(match handler::handle(ctx, command.as_str(), obj.as_str()) {
+    let client = format!("UDP {}", src);
+
+    try!(match handler::handle(ctx, client.as_str(), command.as_str(), obj.as_str()) {
         Ok(result) => send(socket, src, result),
         Err(e) => send(socket, src, e.description().to_string())
     });

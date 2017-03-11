@@ -79,8 +79,6 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     match backend::vm::script_create(ctx, &mut vm) {
         Ok(_) => {},
         Err(e) => {
-            println!("{}", e);
-
             let _ = database::vm::delete(&ctx.db, vm.name.as_str());
             return Err(e);
         }
@@ -147,10 +145,7 @@ pub fn start(ctx: &Context, name: &str) -> Result<String> {
 
     match backend::vm::script_start(ctx, &mut vm) {
         Ok(_) => {},
-        Err(e) => {
-            println!("{}", e);
-            return Err(e);
-        }
+        Err(e) => return Err(e)
     };
 
     Ok(String::new())
@@ -164,9 +159,6 @@ pub fn stop(ctx: &Context, name: &str) -> Result<String> {
 
     match backend::vm::script_stop(ctx, &mut vm) {
         Ok(_) => Ok(String::new()),
-        Err(e) => {
-            println!("{}", e);
-            Err(e)
-        }
+        Err(e) => Err(e)
     }
 }

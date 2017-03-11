@@ -33,7 +33,7 @@ pub fn run(ctx: &Context) {
 
         let (command, obj) = super::parse_command(line);
 
-        match handler::handle(ctx, command.as_str(), obj.as_str()) {
+        match handler::handle(ctx, "stdin", command.as_str(), obj.as_str()) {
             Ok(result) => println!("{}", result),
             Err(e) => println!("{}", e)
         };
