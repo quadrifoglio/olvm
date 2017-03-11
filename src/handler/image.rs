@@ -37,6 +37,10 @@ fn validate(obj: &str) -> Result<Image> {
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let mut img = try!(validate(&obj));
 
+    if let Ok(_) = database::image::get(&ctx.db, img.name.as_str()) {
+        return Err(Error::new("This image name is not available"));
+    }
+
     try!(database::image::create(&ctx.db, &img));
     try!(backend::image::script_create(ctx, &mut img));
 

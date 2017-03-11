@@ -15,6 +15,9 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
     if vm.name.len() == 0 {
         return Err(Error::new("A 'name' is required"));
     }
+    if vm.name.len() > 11 {
+        return Err(Error::new("The 'name' must be less than 11 characters long"));
+    }
     if vm.backend.len() == 0 {
         return Err(Error::new("A 'backend' is required"));
     }
@@ -61,6 +64,12 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     for iface in &mut vm.interfaces {
         if iface.mac.len() == 0 {
             iface.mac = net::rand_mac();
+        }
+        else {
+            match database::vm::get_mac(&ctx.db, iface.mac.as_str()) {
+                Ok(_) => return Err(Error::new("The specified 'mac' address is not available")),
+                Err(_) => {}
+            };
         }
     }
 

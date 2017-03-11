@@ -47,7 +47,7 @@ if len(ifaces) > 0:
         opts.append('tap,id=net' + str(index) + ',ifname=vm' + vm['name'] + '.' + str(index))
 
         opts.append('-device')
-        opts.append('driver=virtio-net,netdev=net' + str(index))
+        opts.append('driver=virtio-net,netdev=net' + str(index) + ',mac=' + iface['mac'])
 
         index = index + 1
 
