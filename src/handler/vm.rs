@@ -162,3 +162,15 @@ pub fn stop(ctx: &Context, name: &str) -> Result<String> {
         Err(e) => Err(e)
     }
 }
+
+/*
+ * Handle a 'statusvm' command
+ */
+pub fn status(ctx: &Context, name: &str) -> Result<String> {
+    let mut vm = try!(database::vm::get(&ctx.db, name));
+
+    match backend::vm::script_status(ctx, &mut vm) {
+        Ok(p) => Ok(try!(serde_json::to_string(&p))),
+        Err(e) => Err(e)
+    }
+}

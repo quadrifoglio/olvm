@@ -3,6 +3,7 @@
  */
 
 use std::error::Error as StdError;
+use std::collections::HashMap;
 
 use serde_json;
 use mongodb::db::Database;
@@ -73,4 +74,14 @@ pub fn script_delete(ctx: &Context, vm: &VM) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn script_status(ctx: &Context, vm: &mut VM) -> Result<HashMap<String, String>> {
+    let backend = try!(ctx.conf.get_backend(vm.backend.as_str()).ok_or(Error::new("Invalid or unknown backend")));
+
+    if let Some(ref path) = backend.vm.status {
+        return Ok(try!(super::script(path, try!(json(&ctx.db, vm)).as_str())));
+    }
+
+    Ok(HashMap::new())
 }

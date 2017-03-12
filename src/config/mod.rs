@@ -40,7 +40,8 @@ pub struct BackendVM {
     pub create: Option<String>,
     pub start: Option<String>,
     pub stop: Option<String>,
-    pub delete: Option<String>
+    pub delete: Option<String>,
+    pub status: Option<String>
 }
 
 #[derive(Deserialize)]
