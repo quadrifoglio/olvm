@@ -11,10 +11,11 @@ extern crate regex;
 extern crate toml;
 extern crate dhcp;
 
+mod utils;
 mod common;
 mod config;
-mod interface;
 mod database;
+mod interface;
 mod backend;
 mod handler;
 mod net;
