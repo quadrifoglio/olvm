@@ -4,10 +4,10 @@
 
 use std::error::Error as StdError;
 use std::net::{TcpListener, TcpStream};
-use std::io::{Read, Write};
+use std::io::{Read, Write, BufReader};
 use std::process;
 
-use httparse;
+use mhttp::Request;
 
 use common::{Context, Result, Error};
 use handler;
@@ -40,39 +40,29 @@ fn response_ok(socket: &mut TcpStream, body: &str) -> Result<()> {
  * Main client loop
  */
 fn client(ctx: &Context, mut socket: TcpStream) -> Result<()> {
-    // 1024 bytes buffer
-    let mut buf = vec![0; 1024];
-
     loop {
-        match socket.read(&mut buf) {
-            Ok(n) => {
-                if n == 0 {
-                    return Ok(())
-                }
-            },
-            Err(e) => return Err(Error::new(e.description()))
-        };
+        let req: Request;
 
-        let mut headers = [httparse::EMPTY_HEADER; 16];
-        let mut req = httparse::Request::new(&mut headers);
+        {
+            let mut r = BufReader::new(&socket);
+            req = match Request::parse(&mut r) {
+                Ok(req) => req,
+                Err(_) => return Ok(())
+            };
+        }
 
-        match req.parse(&buf) {
-            Ok(_) => {},
-            Err(_) => return Ok(())
-        };
-
-        let command = match req.path {
-            Some(p) => p,
-            None => return response_error(&mut socket, "400 Bad Request", "{\"error\": \"Please specify the command in the URL\"}")
-        };
-
-        if command.len() < 2 {
+        if req.url.len() < 2 {
             return response_error(&mut socket, "400 Bad Request", "{\"error\": \"Please specify the command in the URL\"}")
         }
 
         let client = format!("HTTP {}", try!(socket.peer_addr()));
 
-        try!(match handler::handle(ctx, client.as_str(), &command[1..], "") {
+        let body = match String::from_utf8(req.body) {
+            Ok(body) => body.trim().to_string(),
+            Err(_) => return Ok(())
+        };
+
+        try!(match handler::handle(ctx, client.as_str(), &req.url[1..], body.as_str()) {
             Ok(result) => response_ok(&mut socket, result.as_str()),
             Err(e) => response_error(&mut socket, "500 Internal Server Error", e.description())
         });

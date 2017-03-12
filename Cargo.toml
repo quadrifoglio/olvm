@@ -11,9 +11,11 @@ serde_json = "0.9.8"
 toml = "0.3.1"
 bson = "0.4.4"
 mongodb = "0.2.3"
-httparse = "1.2.1"
 
 uuid = { version = "0.4", features = ["v4"] }
 
 [dependencies.dhcp]
 path = "../dhcp-rs"
+
+[dependencies.mhttp]
+path = "../mhttp"

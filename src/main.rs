@@ -10,7 +10,7 @@ extern crate uuid;
 extern crate regex;
 extern crate toml;
 extern crate dhcp;
-extern crate httparse;
+extern crate mhttp;
 
 mod utils;
 mod common;
