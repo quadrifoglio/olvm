@@ -61,6 +61,7 @@ pub fn handle(ctx: &Context, client: &str, cmd: &str, obj: &str) -> Result<Strin
  * Handle a 'status' command, return information about the host system
  */
 fn status(_: &Context) -> Result<String> {
+    // Get RAM information
     let mut mem_total = 0.0;
     let mut mem_free = 0.0;
     let mut mem_buffers = 0.0;
@@ -92,10 +93,34 @@ fn status(_: &Context) -> Result<String> {
         }
     }
 
-    // Construct a JSON object to return. Values are returned as MiB
+    // Get CPU usage information
+    let mut ff = try!(File::open("/proc/stat"));
+    let mut ss = String::new();
+
+    try!(ff.read_to_string(&mut ss));
+
+    let line = try!(ss.lines().next().ok_or(Error::new("Invalid /proc/stat: no lines")));
+    let mut parts = line.split_whitespace();
+
+    try!(parts.next().ok_or(Error::new("Invalid /proc/stat: missing cpu value")));
+
+    let cpu_user = try!(try!(parts.next().ok_or(Error::new("Invalid /proc/stat: missing user value")))
+        .parse::<f32>().ok().ok_or(Error::new("Invalid /proc/stat number")));
+
+    let cpu_nice = try!(try!(parts.next().ok_or(Error::new("Invalid /proc/stat: missing nice value")))
+        .parse::<f32>().ok().ok_or(Error::new("Invalid /proc/stat number")));
+
+    let cpu_system = try!(try!(parts.next().ok_or(Error::new("Invalid /proc/stat: missing system value")))
+        .parse::<f32>().ok().ok_or(Error::new("Invalid /proc/stat number")));
+
+    let cpu_idle = try!(try!(parts.next().ok_or(Error::new("Invalid /proc/stat: missing idle value")))
+        .parse::<f32>().ok().ok_or(Error::new("Invalid /proc/stat number")));
+
+    // Construct a JSON object to return. Memory values are returned as MiB, and CPU usage as %
     let mut data = HashMap::new();
     data.insert("mem_usage", (mem_total - (mem_free + mem_buffers + mem_cached)) / 1024.0);
     data.insert("mem_total", mem_total / 1024.0);
+    data.insert("cpu_usage", ((cpu_user + cpu_nice + cpu_system) / cpu_idle) * 100.0);
 
     Ok(try!(serde_json::to_string(&data)))
 }
