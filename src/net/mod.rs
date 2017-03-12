@@ -28,7 +28,7 @@ pub fn setup(ctx: Arc<Context>) -> Result<()> {
 
     for vm in vms {
         let mut index = 0;
-        for iface in vm.interfaces {
+        for _ in vm.interfaces {
             let tap = iface_dev(vm.name.as_str(), index);
             try!(system::tap_create(tap.as_str()));
 

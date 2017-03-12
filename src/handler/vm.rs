@@ -127,7 +127,7 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
     try!(backend::vm::script_delete(ctx, &mut vm));
 
     let mut index = 0;
-    for iface in &vm.interfaces {
+    for _ in &vm.interfaces {
         let ifname = net::iface_dev(vm.name.as_str(), index);
         try!(net::system::tap_delete(ifname.as_str()));
 

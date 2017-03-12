@@ -33,7 +33,7 @@ pub fn listen(ctx: Arc<Context>) -> Result<()> {
         match socket.recv_from(&mut buf) {
             Ok((len, _)) => {
                 // Handle the request
-                let frame = match Frame::parse(&buf[..len]) {
+                match Frame::parse(&buf[..len]) {
                     Ok(frame) => handle(ctx.clone(), &socket, frame),
                     Err(e) => {
                         println!("Failed to parse DHCP frame: {}", e);
