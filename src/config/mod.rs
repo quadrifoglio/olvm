@@ -27,6 +27,14 @@ pub struct UDP {
 }
 
 /*
+ * HTTP interface configuration
+ */
+#[derive(Deserialize)]
+pub struct HTTP {
+    pub addr: String
+}
+
+/*
  * Backend configuration
  */
 #[derive(Deserialize)]
@@ -58,6 +66,7 @@ pub struct Backend {
 pub struct Config {
     pub database: Database,
     pub udp: Option<UDP>,
+    pub http: Option<HTTP>,
     pub backend: Vec<Backend>
 }
 

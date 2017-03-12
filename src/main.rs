@@ -10,6 +10,7 @@ extern crate uuid;
 extern crate regex;
 extern crate toml;
 extern crate dhcp;
+extern crate httparse;
 
 mod utils;
 mod common;
@@ -61,6 +62,9 @@ fn main() {
     // Start the chosen interface, UDP or stdin
     if ctx.conf.udp.is_some() {
         interface::udp::run(&ctx);
+    }
+    else if ctx.conf.http.is_some() {
+        interface::http::run(&ctx);
     }
     else {
         interface::stdin::run(&ctx);

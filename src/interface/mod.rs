@@ -3,6 +3,10 @@
  * with the program
  */
 
+pub mod stdin;
+pub mod udp;
+pub mod http;
+
 /*
  * Parse a command from a string
  * First part is the command name, the second can be either:
@@ -14,6 +18,8 @@ pub fn parse_command(s: String) -> (String, String) {
     let obj: String;
 
     let s = s.trim().to_string();
+    let s = s.replace('\r', "");
+    let s = s.replace('\n', "");
 
     let space = s.find(' ');
     if let Some(space) = space {
@@ -29,9 +35,6 @@ pub fn parse_command(s: String) -> (String, String) {
 
     return (command, obj)
 }
-
-pub mod stdin;
-pub mod udp;
 
 /*
  * Tests

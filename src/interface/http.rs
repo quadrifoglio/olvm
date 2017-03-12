@@ -1,0 +1,115 @@
+/*
+ * UDP interface - Read commands from a listening UDP socket
+ */
+
+use std::error::Error as StdError;
+use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write};
+use std::process;
+
+use httparse;
+
+use common::{Context, Result, Error};
+use handler;
+
+/*
+ * Return an HTTP error to the client
+ */
+fn response_error(socket: &mut TcpStream, status: &str, body: &str) -> Result<()> {
+    let resp = format!("HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", status, body.len(), body);
+
+    match socket.write(resp.as_bytes()) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::new(e.description()))
+    }
+}
+
+/*
+ * Return a 200 OK response to the client
+ */
+fn response_ok(socket: &mut TcpStream, body: &str) -> Result<()> {
+    let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", body.len(), body);
+
+    match socket.write(resp.as_bytes()) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::new(e.description()))
+    }
+}
+
+/*
+ * Main client loop
+ */
+fn client(ctx: &Context, mut socket: TcpStream) -> Result<()> {
+    // 1024 bytes buffer
+    let mut buf = vec![0; 1024];
+
+    loop {
+        match socket.read(&mut buf) {
+            Ok(n) => {
+                if n == 0 {
+                    return Ok(())
+                }
+            },
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        let mut headers = [httparse::EMPTY_HEADER; 16];
+        let mut req = httparse::Request::new(&mut headers);
+
+        match req.parse(&buf) {
+            Ok(_) => {},
+            Err(_) => return Ok(())
+        };
+
+        let command = match req.path {
+            Some(p) => p,
+            None => return response_error(&mut socket, "400 Bad Request", "{\"error\": \"Please specify the command in the URL\"}")
+        };
+
+        if command.len() < 2 {
+            return response_error(&mut socket, "400 Bad Request", "{\"error\": \"Please specify the command in the URL\"}")
+        }
+
+        let client = format!("HTTP {}", try!(socket.peer_addr()));
+
+        try!(match handler::handle(ctx, client.as_str(), &command[1..], "") {
+            Ok(result) => response_ok(&mut socket, result.as_str()),
+            Err(e) => response_error(&mut socket, "500 Internal Server Error", e.description())
+        });
+    }
+}
+
+pub fn run(ctx: &Context) {
+    // Retreive the listen address
+    let addr = match ctx.conf.http {
+        Some(ref http) => http.addr.clone(),
+        None => {
+            println!("Please specify an HTTP listen address in configuration");
+            process::exit(1);
+        }
+    };
+
+    // Bind a listen socket
+    let listener = match TcpListener::bind(addr.as_str()) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("Failed to bind socket: {}", e);
+            process::exit(1);
+        }
+    };
+
+    println!("Waiting for commands on HTTP {}...", addr);
+
+    // Process all client connections
+    for socket in listener.incoming() {
+        match socket {
+            Ok(socket) => {
+                match client(ctx, socket) {
+                    Ok(_) => {},
+                    Err(e) => println!("{}", e)
+                };
+            },
+            Err(e) => println!("{}", e)
+        };
+    }
+}
