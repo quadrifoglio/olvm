@@ -31,6 +31,10 @@ impl Error {
             message: message.into()
         }
     }
+
+    pub fn description_json(&self) -> String {
+        format!("{{\"error\": \"{}\"}}", self.description())
+    }
 }
 
 impl std::error::Error for Error {

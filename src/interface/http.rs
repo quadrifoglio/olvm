@@ -4,7 +4,7 @@
 
 use std::error::Error as StdError;
 use std::net::{TcpListener, TcpStream};
-use std::io::{Read, Write, BufReader};
+use std::io::{BufReader, Write};
 use std::process;
 
 use mhttp::Request;
@@ -42,7 +42,6 @@ fn response_ok(socket: &mut TcpStream, body: &str) -> Result<()> {
 fn client(ctx: &Context, mut socket: TcpStream) -> Result<()> {
     loop {
         let req: Request;
-
         {
             let mut r = BufReader::new(&socket);
             req = match Request::parse(&mut r) {
@@ -64,7 +63,7 @@ fn client(ctx: &Context, mut socket: TcpStream) -> Result<()> {
 
         try!(match handler::handle(ctx, client.as_str(), &req.url[1..], body.as_str()) {
             Ok(result) => response_ok(&mut socket, result.as_str()),
-            Err(e) => response_error(&mut socket, "500 Internal Server Error", e.description())
+            Err(e) => response_error(&mut socket, "500 Internal Server Error", e.description_json().as_str())
         });
     }
 }

@@ -2,7 +2,6 @@
  * UDP interface - Read commands from a listening UDP socket
  */
 
-use std::error::Error as StdError;
 use std::net::{UdpSocket, SocketAddr};
 use std::process;
 
@@ -38,7 +37,7 @@ fn command(ctx: &Context, socket: &UdpSocket, src: SocketAddr, buf: Vec<u8>) -> 
 
     try!(match handler::handle(ctx, client.as_str(), command.as_str(), obj.as_str()) {
         Ok(result) => send(socket, src, result),
-        Err(e) => send(socket, src, e.description().to_string())
+        Err(e) => send(socket, src, e.description_json())
     });
 
     Ok(())
