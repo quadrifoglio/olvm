@@ -8,7 +8,8 @@ mod network;
 
 use std::collections::HashMap;
 
-use serde_json;
+use serde_json::{self, Number};
+use serde_json::value::Value;
 
 use common::{Context, Result, Error};
 use utils;
@@ -60,14 +61,15 @@ pub fn handle(ctx: &Context, client: &str, cmd: &str, obj: &str) -> Result<Strin
 /*
  * Handle a 'status' command, return information about the host system
  */
-fn status(_: &Context) -> Result<String> {
+fn status(ctx: &Context) -> Result<String> {
     // Construct a JSON object to return. Memory values are returned as MiB, and CPU usage as %
     let mut data = HashMap::new();
     let mem = try!(utils::system::global_memory_info());
 
-    data.insert("mem_usage", mem.0);
-    data.insert("mem_total", mem.1);
-    data.insert("cpu_usage", try!(utils::system::global_cpu_usage()));
+    data.insert("node", Value::Number(Number::from(ctx.conf.global.node)));
+    data.insert("mem_usage", Value::Number(Number::from_f64(mem.0 as f64).unwrap()));
+    data.insert("mem_total", Value::Number(Number::from_f64(mem.1 as f64).unwrap()));
+    data.insert("cpu_usage", Value::Number(Number::from_f64(try!(utils::system::global_cpu_usage()) as f64).unwrap()));
 
     Ok(try!(serde_json::to_string(&data)))
 }
