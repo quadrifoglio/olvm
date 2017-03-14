@@ -7,6 +7,7 @@ use common::{Context, Result, Error};
 use common::structs::VM;
 use database;
 use backend;
+use remote;
 use net;
 
 /*
@@ -29,14 +30,14 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
     // TODO: Check backend, make sure it exists
 
     if vm.image.len() > 0 {
-        if let Err(_) = database::image::get(&ctx.db, vm.image.as_str()) {
+        if let Err(_) = database::image::get(ctx, vm.image.as_str()) {
             return Err(Error::new("Image not found"));
         }
     }
 
     let mut index = 0;
     for iface in &vm.interfaces {
-        match database::network::get(&ctx.db, iface.network.as_str()) {
+        match database::network::get(ctx, iface.network.as_str()) {
             Ok(net) => {
                 let ifname = net::iface_dev(vm.name.as_str(), index);
                 let netname = net::net_dev(net.name.as_str());
@@ -60,7 +61,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     // Validate and retreive VM info from the client-specified parameters
     let mut vm = try!(validate(ctx, &obj));
 
-    if let Ok(_) = database::vm::get(&ctx.db, vm.name.as_str()) {
+    if let Ok(_) = database::vm::get(ctx, vm.name.as_str()) {
         return Err(Error::new("This VM name is not available"));
     }
 
@@ -70,7 +71,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
             iface.mac = net::rand_mac();
         }
         else {
-            match database::vm::get_mac(&ctx.db, iface.mac.as_str()) {
+            match database::vm::get_mac(ctx, iface.mac.as_str()) {
                 Ok(_) => return Err(Error::new("The specified 'mac' address is not available")),
                 Err(_) => {}
             };
@@ -78,12 +79,12 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     }
 
     // Create the VM
-    try!(database::vm::create(&ctx.db, &vm));
+    try!(database::vm::create(ctx, &vm));
 
     match backend::vm::script_create(ctx, &mut vm) {
         Ok(_) => {},
         Err(e) => {
-            let _ = database::vm::delete(&ctx.db, vm.name.as_str());
+            let _ = database::vm::delete(ctx, vm.name.as_str());
             return Err(e);
         }
     };
@@ -95,7 +96,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'listvm' command
  */
 pub fn list(ctx: &Context) -> Result<String> {
-    let vms = try!(database::vm::list(&ctx.db));
+    let vms = try!(database::vm::list(ctx));
     let s = try!(serde_json::to_string(&vms));
 
     Ok(s)
@@ -105,7 +106,7 @@ pub fn list(ctx: &Context) -> Result<String> {
  * Handle a 'getvm' command
  */
 pub fn get(ctx: &Context, name: &str) -> Result<String> {
-    let vm = try!(database::vm::get(&ctx.db, name));
+    let vm = try!(database::vm::get(ctx, name));
     let s = try!(serde_json::to_string(&vm));
 
     Ok(s)
@@ -116,7 +117,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
     let vm = try!(validate(ctx, &obj));
-    try!(database::vm::update(&ctx.db, &vm));
+    try!(database::vm::update(ctx, &vm));
 
     Ok(String::new())
 }
@@ -125,9 +126,9 @@ pub fn update(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'delvm' command
  */
 pub fn delete(ctx: &Context, name: &str) -> Result<String> {
-    let mut vm = try!(database::vm::get(&ctx.db, name));
+    let mut vm = try!(database::vm::get(ctx, name));
 
-    try!(database::vm::delete(&ctx.db, name));
+    try!(database::vm::delete(ctx, name));
     try!(backend::vm::script_delete(ctx, &mut vm));
 
     let mut index = 0;
@@ -145,7 +146,7 @@ pub fn delete(ctx: &Context, name: &str) -> Result<String> {
  * Handle a 'startvm' command
  */
 pub fn start(ctx: &Context, name: &str) -> Result<String> {
-    let mut vm = try!(database::vm::get(&ctx.db, name));
+    let mut vm = try!(database::vm::get(ctx, name));
 
     match backend::vm::script_start(ctx, &mut vm) {
         Ok(_) => {},
@@ -159,7 +160,7 @@ pub fn start(ctx: &Context, name: &str) -> Result<String> {
  * Handle a 'stopvm' command
  */
 pub fn stop(ctx: &Context, name: &str) -> Result<String> {
-    let mut vm = try!(database::vm::get(&ctx.db, name));
+    let mut vm = try!(database::vm::get(ctx, name));
 
     match backend::vm::script_stop(ctx, &mut vm) {
         Ok(_) => Ok(String::new()),
@@ -171,7 +172,7 @@ pub fn stop(ctx: &Context, name: &str) -> Result<String> {
  * Handle a 'statusvm' command
  */
 pub fn status(ctx: &Context, name: &str) -> Result<String> {
-    let mut vm = try!(database::vm::get(&ctx.db, name));
+    let mut vm = try!(database::vm::get(ctx, name));
 
     match backend::vm::script_status(ctx, &mut vm) {
         Ok(p) => {
@@ -202,10 +203,23 @@ pub fn migrate(ctx: &Context, obj: &str) -> Result<String> {
     let name = try!(try!(req.get("name").ok_or(Error::new("Missing `name`"))).as_str().ok_or(Error::new("Invalid `name`")));
     let dst = try!(try!(req.get("destination").ok_or(Error::new("Missing `destination`"))).as_str().ok_or(Error::new("Invalid `destination`")));
 
-    let vm = try!(database::vm::get(&ctx.db, name));
+    let vm = try!(database::vm::get(ctx, name));
 
     if !net::is_valid_ip_port(dst) {
         return Err(Error::new("Invalid `destination`, must be ip:port"));
+    }
+
+    let status = try!(remote::command(dst, "status", ""));
+    let remote_node = try!(try!(status.get("node").ok_or(Error::new("Remote: invalid `node`"))).as_i64().ok_or(Error::new("Remote: invalid `node`")));
+
+    if remote_node as i32 == ctx.conf.global.node {
+        return Err(Error::new("The remote's node ID is the same as the local one"));
+    }
+
+    if vm.image.len() > 0 {
+        let remote_image = try!(remote::command(dst, "getimg", vm.image.as_str()));
+        let remote_image_node = try!(remote_image.get("node").ok_or(Error::new("Remote image: no `node`")));
+        let remote_image_node = try!(remote_image_node.as_i64().ok_or(Error::new("Remote image: invalid `node`")));
     }
 
     Ok(String::new())

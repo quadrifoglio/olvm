@@ -11,7 +11,7 @@ pub fn script_create(ctx: &Context, img: &mut Image) -> Result<()> {
 
     if let Some(ref path) = backend.image.create {
         let params = try!(super::script(path, try!(img.to_json()).as_str()));
-        try!(database::image::params(&ctx.db, img, params));
+        try!(database::image::params(ctx, img, params));
     }
 
     Ok(())

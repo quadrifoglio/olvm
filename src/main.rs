@@ -18,6 +18,7 @@ mod config;
 mod database;
 mod interface;
 mod backend;
+mod remote;
 mod handler;
 mod net;
 

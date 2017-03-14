@@ -6,17 +6,17 @@ use std::vec::Vec;
 use std::collections::HashMap;
 
 use bson::Document;
-use mongodb::db::{Database, ThreadedDatabase};
+use mongodb::db::ThreadedDatabase;
 
-use common::{Result, Error};
+use common::{Context, Result, Error};
 use common::structs::Image;
 
 /*
  * Create a new image in database
  */
-pub fn create(db: &Database, img: &Image) -> Result<()> {
+pub fn create(ctx: &Context, img: &Image) -> Result<()> {
     let doc = try!(img.to_bson());
-    try!(db.collection("images").insert_one(doc, None));
+    try!(ctx.db.collection("images").insert_one(doc, None));
 
     Ok(())
 }
@@ -24,9 +24,10 @@ pub fn create(db: &Database, img: &Image) -> Result<()> {
 /*
  * List images in database
  */
-pub fn list(db: &Database) -> Result<Vec<Image>> {
+pub fn list(ctx: &Context) -> Result<Vec<Image>> {
     let mut imgs = Vec::new();
-    let cursor = try!(db.collection("images").find(None, None));
+    let node = ctx.conf.global.node;
+    let cursor = try!(ctx.db.collection("images").find(Some(doc!{"node" => node}), None));
 
     for result in cursor {
         if let Ok(doc) = result {
@@ -40,8 +41,9 @@ pub fn list(db: &Database) -> Result<Vec<Image>> {
 /*
  * Get an image from the database
  */
-pub fn get(db: &Database, name: &str) -> Result<Image> {
-    let doc = try!(db.collection("images").find_one(Some(doc!{"name" => name}), None));
+pub fn get(ctx: &Context, name: &str) -> Result<Image> {
+    let node = ctx.conf.global.node;
+    let doc = try!(ctx.db.collection("images").find_one(Some(doc!{"name" => name, "node" => node}), None));
 
     if let Some(img) = doc {
         return Ok(try!(Image::from_bson(img)));
@@ -53,13 +55,13 @@ pub fn get(db: &Database, name: &str) -> Result<Image> {
 /*
  * Store the custom parameters returned by an image backend script
  */
-pub fn params(db: &Database, img: &mut Image, params: HashMap<String, String>) -> Result<()> {
+pub fn params(ctx: &Context, img: &mut Image, params: HashMap<String, String>) -> Result<()> {
     if params.len() > 0 {
         for (key, val) in params {
             img.parameters.insert(key.to_string(), val.to_string());
         }
 
-        try!(update(db, img));
+        try!(update(ctx, img));
     }
 
     Ok(())
@@ -68,7 +70,8 @@ pub fn params(db: &Database, img: &mut Image, params: HashMap<String, String>) -
 /*
  * Update an image in the database
  */
-pub fn update(db: &Database, img: &Image) -> Result<()> {
+pub fn update(ctx: &Context, img: &Image) -> Result<()> {
+    let node = ctx.conf.global.node;
     let name = img.name.as_str();
     let file = img.file.as_str();
 
@@ -82,7 +85,7 @@ pub fn update(db: &Database, img: &Image) -> Result<()> {
         "parameters" => p
     };
 
-    try!(db.collection("images").update_one(doc!{"name" => name}, doc! {
+    try!(ctx.db.collection("images").update_one(doc!{"name" => name, "node" => node}, doc! {
         "$set" => update
     }, None));
 
@@ -92,7 +95,8 @@ pub fn update(db: &Database, img: &Image) -> Result<()> {
 /*
  * Delete an image from the database
  */
-pub fn delete(db: &Database, name: &str) -> Result<()> {
-    try!(db.collection("images").delete_one(doc!{"name" => name}, None));
+pub fn delete(ctx: &Context, name: &str) -> Result<()> {
+    let node = ctx.conf.global.node;
+    try!(ctx.db.collection("images").delete_one(doc!{"name" => name, "node" => node}, None));
     Ok(())
 }

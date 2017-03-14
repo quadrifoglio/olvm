@@ -39,7 +39,7 @@ fn validate(ctx: &Context, obj: &str) -> Result<Image> {
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let mut img = try!(validate(ctx, &obj));
 
-    if let Ok(_) = database::image::get(&ctx.db, img.name.as_str()) {
+    if let Ok(_) = database::image::get(ctx, img.name.as_str()) {
         return Err(Error::new("This image name is not available"));
     }
 
@@ -48,7 +48,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
 
     img.file = path;
 
-    try!(database::image::create(&ctx.db, &img));
+    try!(database::image::create(ctx, &img));
     try!(backend::image::script_create(ctx, &mut img));
 
     Ok(String::new())
@@ -58,7 +58,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'listimg' command
  */
 pub fn list(ctx: &Context) -> Result<String> {
-    let imgs = try!(database::image::list(&ctx.db));
+    let imgs = try!(database::image::list(ctx));
     let s = try!(serde_json::to_string(&imgs));
 
     Ok(s)
@@ -68,7 +68,7 @@ pub fn list(ctx: &Context) -> Result<String> {
  * Handle a 'getimg' command
  */
 pub fn get(ctx: &Context, name: &str) -> Result<String> {
-    let img = try!(database::image::get(&ctx.db, name));
+    let img = try!(database::image::get(ctx, name));
     let s = try!(serde_json::to_string(&img));
 
     Ok(s)
@@ -79,7 +79,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
     let img = try!(validate(ctx, &obj));
-    try!(database::image::update(&ctx.db, &img));
+    try!(database::image::update(ctx, &img));
 
     Ok(String::new())
 }
@@ -88,10 +88,10 @@ pub fn update(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'delimg' command
  */
 pub fn delete(ctx: &Context, name: &str) -> Result<String> {
-    let img = try!(database::image::get(&ctx.db, name));
+    let img = try!(database::image::get(ctx, name));
 
     try!(backend::image::script_delete(ctx, &img));
-    try!(database::image::delete(&ctx.db, img.name.as_str()));
+    try!(database::image::delete(ctx, img.name.as_str()));
 
     Ok(String::new())
 }

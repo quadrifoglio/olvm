@@ -49,7 +49,7 @@ pub fn listen(ctx: Arc<Context>) -> Result<()> {
 
 fn handle(ctx: Arc<Context>, socket: &UdpSocket, req: Frame) {
     // Get the VM interface's IP from database to offer it in DHCP response
-    let ip = match database::vm::get_mac(&ctx.db, req.client_mac_string().as_str()) {
+    let ip = match database::vm::get_mac(ctx.as_ref(), req.client_mac_string().as_str()) {
         Ok((vm, index)) => {
             let iface = vm.interfaces.get(index).unwrap(); // Unwrapping is ok, checked in database::vm::get_mac
 

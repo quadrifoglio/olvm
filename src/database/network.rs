@@ -5,17 +5,17 @@
 use std::vec::Vec;
 
 use bson::Bson;
-use mongodb::db::{Database, ThreadedDatabase};
+use mongodb::db::ThreadedDatabase;
 
-use common::{Result, Error};
+use common::{Context, Result, Error};
 use common::structs::Network;
 
 /*
  * Create a new network in database
  */
-pub fn create(db: &Database, net: &Network) -> Result<()> {
+pub fn create(ctx: &Context, net: &Network) -> Result<()> {
     let doc = try!(net.to_bson());
-    try!(db.collection("networks").insert_one(doc, None));
+    try!(ctx.db.collection("networks").insert_one(doc, None));
 
     Ok(())
 }
@@ -23,9 +23,10 @@ pub fn create(db: &Database, net: &Network) -> Result<()> {
 /*
  * List networks in database
  */
-pub fn list(db: &Database) -> Result<Vec<Network>> {
+pub fn list(ctx: &Context) -> Result<Vec<Network>> {
     let mut nets = Vec::new();
-    let cursor = try!(db.collection("networks").find(None, None));
+    let node = ctx.conf.global.node;
+    let cursor = try!(ctx.db.collection("networks").find(Some(doc!{"node" => node}), None));
 
     for result in cursor {
         if let Ok(doc) = result {
@@ -39,8 +40,9 @@ pub fn list(db: &Database) -> Result<Vec<Network>> {
 /*
  * Get an network from the database
  */
-pub fn get(db: &Database, name: &str) -> Result<Network> {
-    let doc = try!(db.collection("networks").find_one(Some(doc!{"name" => name}), None));
+pub fn get(ctx: &Context, name: &str) -> Result<Network> {
+    let node = ctx.conf.global.node;
+    let doc = try!(ctx.db.collection("networks").find_one(Some(doc!{"name" => name, "node" => node}), None));
 
     if let Some(net) = doc {
         return Ok(try!(Network::from_bson(net)));
@@ -52,7 +54,8 @@ pub fn get(db: &Database, name: &str) -> Result<Network> {
 /*
  * Update an network in the database
  */
-pub fn update(db: &Database, net: &Network) -> Result<()> {
+pub fn update(ctx: &Context, net: &Network) -> Result<()> {
+    let node = ctx.conf.global.node;
     let name = net.name.as_str();
     let cidr = net.cidr.as_str();
     let router = net.router.as_str();
@@ -68,7 +71,7 @@ pub fn update(db: &Database, net: &Network) -> Result<()> {
         "dns" => dnsv
     };
 
-    try!(db.collection("networks").update_one(doc!{"name" => name}, doc! {
+    try!(ctx.db.collection("networks").update_one(doc!{"name" => name, "node" => node}, doc! {
         "$set" => update
     }, None));
 
@@ -78,7 +81,9 @@ pub fn update(db: &Database, net: &Network) -> Result<()> {
 /*
  * Delete an network from the database
  */
-pub fn delete(db: &Database, name: &str) -> Result<()> {
-    try!(db.collection("networks").delete_one(doc!{"name" => name}, None));
+pub fn delete(ctx: &Context, name: &str) -> Result<()> {
+    let node = ctx.conf.global.node;
+
+    try!(ctx.db.collection("networks").delete_one(doc!{"name" => name, "node" => node}, None));
     Ok(())
 }

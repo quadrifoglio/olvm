@@ -5,18 +5,18 @@
 use std::vec::Vec;
 use std::collections::HashMap;
 
-use mongodb::db::{Database, ThreadedDatabase};
+use mongodb::db::ThreadedDatabase;
 use bson::{self, Document, Array};
 
-use common::{Result, Error};
+use common::{Context, Result, Error};
 use common::structs::VM;
 
 /*
  * Create a new VM in database
  */
-pub fn create(db: &Database, vm: &VM) -> Result<()> {
+pub fn create(ctx: &Context, vm: &VM) -> Result<()> {
     let doc = try!(vm.to_bson());
-    try!(db.collection("vms").insert_one(doc, None));
+    try!(ctx.db.collection("vms").insert_one(doc, None));
 
     Ok(())
 }
@@ -24,9 +24,10 @@ pub fn create(db: &Database, vm: &VM) -> Result<()> {
 /*
  * List VMs in database
  */
-pub fn list(db: &Database) -> Result<Vec<VM>> {
+pub fn list(ctx: &Context) -> Result<Vec<VM>> {
     let mut vms = Vec::new();
-    let cursor = try!(db.collection("vms").find(None, None));
+    let node = ctx.conf.global.node;
+    let cursor = try!(ctx.db.collection("vms").find(Some(doc!{"node" => node}), None));
 
     for result in cursor {
         if let Ok(doc) = result {
@@ -40,8 +41,9 @@ pub fn list(db: &Database) -> Result<Vec<VM>> {
 /*
  * Get an VM from the database
  */
-pub fn get(db: &Database, name: &str) -> Result<VM> {
-    let doc = try!(db.collection("vms").find_one(Some(doc!{"name" => name}), None));
+pub fn get(ctx: &Context, name: &str) -> Result<VM> {
+    let node = ctx.conf.global.node;
+    let doc = try!(ctx.db.collection("vms").find_one(Some(doc!{"name" => name, "node" => node}), None));
 
     if let Some(vm) = doc {
         return Ok(try!(VM::from_bson(vm)));
@@ -53,8 +55,9 @@ pub fn get(db: &Database, name: &str) -> Result<VM> {
 /*
  * Get a VM by its MAC address
  */
-pub fn get_mac(db: &Database, mac: &str) -> Result<(VM, usize)> {
-    let cursor = try!(db.collection("vms").find(None, None));
+pub fn get_mac(ctx: &Context, mac: &str) -> Result<(VM, usize)> {
+    let node = ctx.conf.global.node;
+    let cursor = try!(ctx.db.collection("vms").find(Some(doc!{"node" => node}), None));
 
     for result in cursor {
         if let Ok(doc) = result {
@@ -84,13 +87,13 @@ pub fn get_mac(db: &Database, mac: &str) -> Result<(VM, usize)> {
 /*
  * Store the custom parameters returned by a VM backend script
  */
-pub fn params(db: &Database, vm: &mut VM, params: HashMap<String, String>) -> Result<()> {
+pub fn params(ctx: &Context, vm: &mut VM, params: HashMap<String, String>) -> Result<()> {
     if params.len() > 0 {
         for (key, val) in params {
             vm.parameters.insert(key.to_string(), val.to_string());
         }
 
-        try!(update(db, vm));
+        try!(update(ctx, vm));
     }
 
     Ok(())
@@ -99,7 +102,8 @@ pub fn params(db: &Database, vm: &mut VM, params: HashMap<String, String>) -> Re
 /*
  * Update an VM in the database
  */
-pub fn update(db: &Database, vm: &VM) -> Result<()> {
+pub fn update(ctx: &Context, vm: &VM) -> Result<()> {
+    let node = ctx.conf.global.node;
     let name = vm.name.as_str();
 
     let mut i = Array::new();
@@ -117,7 +121,7 @@ pub fn update(db: &Database, vm: &VM) -> Result<()> {
         "parameters" => p
     };
 
-    try!(db.collection("vms").update_one(doc!{"name" => name}, doc! {
+    try!(ctx.db.collection("vms").update_one(doc!{"name" => name, "node" => node}, doc! {
         "$set" => update
     }, None));
 
@@ -127,7 +131,8 @@ pub fn update(db: &Database, vm: &VM) -> Result<()> {
 /*
  * Delete an VM from the database
  */
-pub fn delete(db: &Database, name: &str) -> Result<()> {
-    try!(db.collection("vms").delete_one(doc!{"name" => name}, None));
+pub fn delete(ctx: &Context, name: &str) -> Result<()> {
+    let node = ctx.conf.global.node;
+    try!(ctx.db.collection("vms").delete_one(doc!{"name" => name, "node" => node}, None));
     Ok(())
 }

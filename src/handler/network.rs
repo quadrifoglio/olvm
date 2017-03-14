@@ -41,7 +41,7 @@ fn validate(ctx: &Context, obj: &str) -> Result<Network> {
  */
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let net = try!(validate(ctx, &obj));
-    try!(database::network::create(&ctx.db, &net));
+    try!(database::network::create(ctx, &net));
 
     let netname = net::net_dev(net.name.as_str());
     try!(net::system::bridge_create(netname.as_str()));
@@ -53,7 +53,7 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'listnet' command
  */
 pub fn list(ctx: &Context) -> Result<String> {
-    let nets = try!(database::network::list(&ctx.db));
+    let nets = try!(database::network::list(ctx));
     let s = try!(serde_json::to_string(&nets));
 
     Ok(s)
@@ -63,7 +63,7 @@ pub fn list(ctx: &Context) -> Result<String> {
  * Handle a 'getnet' command
  */
 pub fn get(ctx: &Context, name: &str) -> Result<String> {
-    let net = try!(database::network::get(&ctx.db, name));
+    let net = try!(database::network::get(ctx, name));
     let s = try!(serde_json::to_string(&net));
 
     Ok(s)
@@ -74,7 +74,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
     let net = try!(validate(ctx, &obj));
-    try!(database::network::update(&ctx.db, &net));
+    try!(database::network::update(ctx, &net));
 
     Ok(String::new())
 }
@@ -83,9 +83,9 @@ pub fn update(ctx: &Context, obj: &str) -> Result<String> {
  * Handle a 'delnet' command
  */
 pub fn delete(ctx: &Context, name: &str) -> Result<String> {
-    let net = try!(database::network::get(&ctx.db, name));
+    let net = try!(database::network::get(ctx, name));
 
-    try!(database::network::delete(&ctx.db, net.name.as_str()));
+    try!(database::network::delete(ctx, net.name.as_str()));
 
     let netname = net::net_dev(net.name.as_str());
     try!(net::system::bridge_delete(netname.as_str()));

@@ -17,14 +17,14 @@ use database;
  * Setup the networking module: create network interfaces, start DHCP server
  */
 pub fn setup(ctx: Arc<Context>) -> Result<()> {
-    let nets = try!(database::network::list(&ctx.db));
+    let nets = try!(database::network::list(ctx.as_ref()));
 
     for net in nets {
         let netdev = net_dev(net.name.as_str());
         try!(system::bridge_create(netdev.as_str()));
     }
 
-    let vms = try!(database::vm::list(&ctx.db));
+    let vms = try!(database::vm::list(ctx.as_ref()));
 
     for vm in vms {
         let mut index = 0;
