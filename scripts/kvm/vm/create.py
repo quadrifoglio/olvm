@@ -7,8 +7,8 @@ import os
 import os.path
 
 vm = json.loads(sys.argv[1])
-folder = '/var/lib/olvm/vm/' + vm['name']
-disk = folder + '/disk.qcow2'
+folder = '/var/lib/olvm/vms/kvm/' + vm['name']
+disk = folder + '/disk.data'
 
 if not os.path.isdir(folder):
     os.makedirs(folder)

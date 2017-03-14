@@ -106,6 +106,14 @@ impl Config {
 
         Ok(format!("{}/{}.image", backend.image.path, name))
     }
+
+    /*
+     * Return the path of a VM's disk image
+     */
+    pub fn get_vm_disk(&self, backend: &str, name: &str) -> Result<String> {
+        // TODO: Use configuration
+        Ok(format!("/var/lib/wir/olvm/vms/{}/{}/disk.data", backend, name))
+    }
 }
 
 pub fn open(path: &str) -> Result<Config> {

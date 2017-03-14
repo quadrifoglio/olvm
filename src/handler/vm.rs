@@ -6,6 +6,7 @@ use serde_json::value::Value;
 use common::{Context, Result, Error};
 use common::structs::VM;
 use database;
+use handler;
 use backend;
 use remote;
 use net;
@@ -203,7 +204,7 @@ pub fn migrate(ctx: &Context, obj: &str) -> Result<String> {
     let name = try!(try!(req.get("name").ok_or(Error::new("Missing `name`"))).as_str().ok_or(Error::new("Invalid `name`")));
     let dst = try!(try!(req.get("destination").ok_or(Error::new("Missing `destination`"))).as_str().ok_or(Error::new("Invalid `destination`")));
 
-    let vm = try!(database::vm::get(ctx, name));
+    let mut vm = try!(database::vm::get(ctx, name));
 
     if !net::is_valid_ip_port(dst) {
         return Err(Error::new("Invalid `destination`, must be ip:port"));
@@ -216,11 +217,20 @@ pub fn migrate(ctx: &Context, obj: &str) -> Result<String> {
         return Err(Error::new("The remote's node ID is the same as the local one"));
     }
 
-    if vm.image.len() > 0 {
-        let remote_image = try!(remote::command(dst, "getimg", vm.image.as_str()));
-        let remote_image_node = try!(remote_image.get("node").ok_or(Error::new("Remote image: no `node`")));
-        let remote_image_node = try!(remote_image_node.as_i64().ok_or(Error::new("Remote image: invalid `node`")));
-    }
+    vm.node = 0;
+    let json = try!(vm.to_json());
+
+    let dst_addr = match dst.find(':') {
+        Some(i) => &dst[..i],
+        None => return Err(Error::new("Invalid destination address: missing ':'"))
+    };
+
+    let local = try!(ctx.conf.get_vm_disk(vm.backend.as_str(), vm.name.as_str()));
+    // TODO: Figure out the destination path
+
+    try!(remote::command(dst, "createvm", json.as_str()));
+    try!(remote::transfer(local.as_str(), dst_addr, local.as_str()));
+    try!(handler::vm::delete(ctx, vm.name.as_str()));
 
     Ok(String::new())
 }

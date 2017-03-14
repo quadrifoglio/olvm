@@ -9,8 +9,8 @@ vm = json.loads(sys.argv[1])
 params = vm['parameters']
 ifaces = vm['interfaces']
 
-folder = '/var/lib/olvm/vm/' + vm['name']
-disk = folder + '/disk.qcow2'
+folder = '/var/lib/olvm/vms/kvm/' + vm['name']
+disk = folder + '/disk.data'
 
 opts = [
     '/usr/bin/qemu-system-x86_64',
