@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use serde_json;
+use serde_json::value::Value;
 
 use common::{Context, Result, Error};
 use common::structs::VM;
@@ -170,7 +173,22 @@ pub fn status(ctx: &Context, name: &str) -> Result<String> {
     let mut vm = try!(database::vm::get(&ctx.db, name));
 
     match backend::vm::script_status(ctx, &mut vm) {
-        Ok(p) => Ok(try!(serde_json::to_string(&p))),
+        Ok(p) => {
+            let mut pp: HashMap<String, Value> = HashMap::new();
+            for (k, v) in p {
+                if v == "true" {
+                    pp.insert(k, Value::Bool(true));
+                }
+                else if v == "false" {
+                    pp.insert(k, Value::Bool(false));
+                }
+                else {
+                    pp.insert(k, Value::String(v));
+                }
+            }
+
+            Ok(try!(serde_json::to_string(&pp)))
+        }
         Err(e) => Err(e)
     }
 }

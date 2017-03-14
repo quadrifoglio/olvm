@@ -5,7 +5,9 @@
 use std::error::Error as StdError;
 use std::net::{TcpListener, TcpStream};
 use std::io::{BufReader, Write};
+use std::sync::Arc;
 use std::process;
+use std::thread;
 
 use mhttp::Request;
 
@@ -16,7 +18,7 @@ use handler;
  * Return an HTTP error to the client
  */
 fn response_error(socket: &mut TcpStream, status: &str, body: &str) -> Result<()> {
-    let resp = format!("HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", status, body.len(), body);
+    let resp = format!("HTTP/1.1 {}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", status, body.len(), body);
 
     match socket.write(resp.as_bytes()) {
         Ok(_) => Ok(()),
@@ -28,7 +30,7 @@ fn response_error(socket: &mut TcpStream, status: &str, body: &str) -> Result<()
  * Return a 200 OK response to the client
  */
 fn response_ok(socket: &mut TcpStream, body: &str) -> Result<()> {
-    let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", body.len(), body);
+    let resp = format!("HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{}", body.len(), body);
 
     match socket.write(resp.as_bytes()) {
         Ok(_) => Ok(()),
@@ -68,7 +70,7 @@ fn client(ctx: &Context, mut socket: TcpStream) -> Result<()> {
     }
 }
 
-pub fn run(ctx: &Context) {
+pub fn run(ctx: Arc<Context>) {
     // Retreive the listen address
     let addr = match ctx.conf.http {
         Some(ref http) => http.addr.clone(),
@@ -93,10 +95,14 @@ pub fn run(ctx: &Context) {
     for socket in listener.incoming() {
         match socket {
             Ok(socket) => {
-                match client(ctx, socket) {
-                    Ok(_) => {},
-                    Err(e) => println!("{}", e)
-                };
+                let ctx = ctx.clone();
+
+                thread::spawn(move || {
+                    match client(ctx.as_ref(), socket) {
+                        Ok(_) => {},
+                        Err(e) => println!("{}", e)
+                    };
+                });
             },
             Err(e) => println!("{}", e)
         };

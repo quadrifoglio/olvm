@@ -53,7 +53,7 @@ pub fn rand_mac() -> String {
  * Check is the specified string is a valid IP address
  */
 pub fn is_valid_ip(ip: &str) -> bool {
-   Regex::new(r"^([0-9]{0:3})\.([0-9]{0:3})\.([0-9]{0:3})\.([0-9]{0:3})$").unwrap().is_match(ip)
+   Regex::new(r"^([0-9]{0,3})\.([0-9]{0,3})\.([0-9]{0,3})\.([0-9]{0,3})$").unwrap().is_match(ip)
 }
 
 /*
@@ -64,6 +64,8 @@ pub fn is_valid_cidr(cidr: &str) -> bool {
         Some(index) => index,
         None => return false
     };
+
+    println!("{}", &cidr[..index]);
 
     is_valid_ip(&cidr[..index])
 }

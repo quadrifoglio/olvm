@@ -64,7 +64,7 @@ fn main() {
         interface::udp::run(&ctx);
     }
     else if ctx.conf.http.is_some() {
-        interface::http::run(&ctx);
+        interface::http::run(ctx.clone());
     }
     else {
         interface::stdin::run(&ctx);
