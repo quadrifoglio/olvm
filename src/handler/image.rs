@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::fs;
 
 use serde_json;
 
@@ -10,8 +11,9 @@ use backend;
 /*
  * Validates the user-specified parameters for image creation/update
  */
-fn validate(obj: &str) -> Result<Image> {
-    let img = try!(Image::from_json(obj));
+fn validate(ctx: &Context, obj: &str) -> Result<Image> {
+    let mut img = try!(Image::from_json(obj));
+    img.node = ctx.conf.global.node;
 
     if img.name.len() == 0 {
         return Err(Error::new("A 'name' is required"));
@@ -35,11 +37,16 @@ fn validate(obj: &str) -> Result<Image> {
  * Handle a 'createimg' command
  */
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
-    let mut img = try!(validate(&obj));
+    let mut img = try!(validate(ctx, &obj));
 
     if let Ok(_) = database::image::get(&ctx.db, img.name.as_str()) {
         return Err(Error::new("This image name is not available"));
     }
+
+    let path = try!(ctx.conf.get_image_path(img.backend.as_str(), img.name.as_str()));
+    try!(fs::copy(img.file.as_str(), path.as_str()));
+
+    img.file = path;
 
     try!(database::image::create(&ctx.db, &img));
     try!(backend::image::script_create(ctx, &mut img));
@@ -71,7 +78,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  * Handle a 'updateimg' command
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
-    let img = try!(validate(&obj));
+    let img = try!(validate(ctx, &obj));
     try!(database::image::update(&ctx.db, &img));
 
     Ok(String::new())

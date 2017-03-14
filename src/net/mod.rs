@@ -57,6 +57,13 @@ pub fn is_valid_ip(ip: &str) -> bool {
 }
 
 /*
+ * Check is the specified string is a valid IP/Port string
+ */
+pub fn is_valid_ip_port(ip: &str) -> bool {
+   Regex::new(r"^([0-9]{0,3})\.([0-9]{0,3})\.([0-9]{0,3})\.([0-9]{0,3}):([0-9]*)$").unwrap().is_match(ip)
+}
+
+/*
  * Check if the specified string is a valid CIDR network address
  */
 pub fn is_valid_cidr(cidr: &str) -> bool {

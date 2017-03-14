@@ -26,7 +26,7 @@ use std::sync::Arc;
 
 fn main() {
     // Open and parse configuration file
-    let conf = match config::open("/etc/olvm.conf") {
+    let conf = match config::open("olvm.conf") {
         Ok(conf) => conf,
         Err(e) => {
             println!("Failed to load configuration: {}", e);

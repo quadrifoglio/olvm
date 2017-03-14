@@ -8,8 +8,9 @@ use net;
 /*
  * Validates the user-specified parameters for network creation/update
  */
-fn validate(obj: &str) -> Result<Network> {
-    let net = try!(Network::from_json(obj));
+fn validate(ctx: &Context, obj: &str) -> Result<Network> {
+    let mut net = try!(Network::from_json(obj));
+    net.node = ctx.conf.global.node;
 
     if net.name.len() == 0 {
         return Err(Error::new("A 'name' is required"));
@@ -39,7 +40,7 @@ fn validate(obj: &str) -> Result<Network> {
  * Handle a 'createnet' command
  */
 pub fn create(ctx: &Context, obj: &str) -> Result<String> {
-    let net = try!(validate(&obj));
+    let net = try!(validate(ctx, &obj));
     try!(database::network::create(&ctx.db, &net));
 
     let netname = net::net_dev(net.name.as_str());
@@ -72,7 +73,7 @@ pub fn get(ctx: &Context, name: &str) -> Result<String> {
  * Handle a 'updatenet' command
  */
 pub fn update(ctx: &Context, obj: &str) -> Result<String> {
-    let net = try!(validate(&obj));
+    let net = try!(validate(ctx, &obj));
     try!(database::network::update(&ctx.db, &net));
 
     Ok(String::new())

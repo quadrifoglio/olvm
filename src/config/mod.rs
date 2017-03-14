@@ -10,6 +10,14 @@ use common::{Result, Error};
 use toml;
 
 /*
+ * Global configuration
+ */
+#[derive(Deserialize)]
+pub struct Global {
+    pub node: i32
+}
+
+/*
  * Database configuration
  */
 #[derive(Deserialize)]
@@ -39,6 +47,8 @@ pub struct HTTP {
  */
 #[derive(Deserialize)]
 pub struct BackendImage {
+    pub path: String,
+
     pub create: Option<String>,
     pub delete: Option<String>
 }
@@ -64,6 +74,7 @@ pub struct Backend {
  */
 #[derive(Deserialize)]
 pub struct Config {
+    pub global: Global,
     pub database: Database,
     pub udp: Option<UDP>,
     pub http: Option<HTTP>,
@@ -71,6 +82,9 @@ pub struct Config {
 }
 
 impl Config {
+    /*
+     * Return the backend corresponding to a name
+     */
     pub fn get_backend(&self, backend: &str) -> Option<&Backend> {
         for b in &self.backend {
             if b.name.as_str() == backend {
@@ -79,6 +93,18 @@ impl Config {
         }
 
         None
+    }
+
+    /*
+     * Return the path of an image
+     */
+    pub fn get_image_path(&self, backend: &str, name: &str) -> Result<String> {
+        let backend = match self.get_backend(backend) {
+            Some(b) => b,
+            None => return Err(Error::new("Unknown backend"))
+        };
+
+        Ok(format!("{}/{}.image", backend.image.path, name))
     }
 }
 

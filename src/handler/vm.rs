@@ -13,7 +13,8 @@ use net;
  * Validates the user-specified parameters for VM creation, and sets up the VM's network interfaces
  */
 fn validate(ctx: &Context, obj: &str) -> Result<VM> {
-    let vm = try!(VM::from_json(obj));
+    let mut vm = try!(VM::from_json(obj));
+    vm.node = ctx.conf.global.node;
 
     if vm.name.len() == 0 {
         return Err(Error::new("A 'name' is required"));
@@ -191,4 +192,21 @@ pub fn status(ctx: &Context, name: &str) -> Result<String> {
         }
         Err(e) => Err(e)
     }
+}
+
+/*
+ * Migrate a VM to another host
+ */
+pub fn migrate(ctx: &Context, obj: &str) -> Result<String> {
+    let req: Value = try!(serde_json::from_str(obj));
+    let name = try!(try!(req.get("name").ok_or(Error::new("Missing `name`"))).as_str().ok_or(Error::new("Invalid `name`")));
+    let dst = try!(try!(req.get("destination").ok_or(Error::new("Missing `destination`"))).as_str().ok_or(Error::new("Invalid `destination`")));
+
+    let vm = try!(database::vm::get(&ctx.db, name));
+
+    if !net::is_valid_ip_port(dst) {
+        return Err(Error::new("Invalid `destination`, must be ip:port"));
+    }
+
+    Ok(String::new())
 }

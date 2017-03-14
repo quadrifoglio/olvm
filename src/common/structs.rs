@@ -138,6 +138,9 @@ impl VM {
 pub struct Network {
     pub name: String,
 
+    #[serde(default = "default_i32")]
+    pub node: i32,
+
     #[serde(default = "String::new")]
     pub cidr: String, // CIDR network address (example: 192.168.1.0/24)
 

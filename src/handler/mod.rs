@@ -34,6 +34,7 @@ pub fn handle(ctx: &Context, client: &str, cmd: &str, obj: &str) -> Result<Strin
         "startvm" => vm::start(ctx, obj),
         "stopvm" => vm::stop(ctx, obj),
         "statusvm" => vm::status(ctx, obj),
+        "migratevm" => vm::migrate(ctx, obj),
 
         "createnet" => network::create(ctx, obj),
         "listnet" => network::list(ctx),
