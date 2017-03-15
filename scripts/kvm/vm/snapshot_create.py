@@ -1,7 +1,6 @@
 #!/usr/bin/python2
 
 import sys
-import time
 import json
 import socket
 
@@ -21,9 +20,13 @@ except IOError as e:
 
 data = '{"execute": "qmp_capabilities"}'
 sock.send(data)
+sock.recv(1024)
 
-data = '{"execute": "human-monitor-command", "arguments": {"command-line": "savevm' + name + '"}}'
+data = '{"execute": "human-monitor-command", "arguments": {"command-line": "savevm ' + name + '"}}'
 sock.send(data)
 
-data = socket.recv(1024)
-sys.stderr.write(data)
+data = sock.recv(1024)
+
+if '"return": {}' not in data:
+    sys.stderr.write('return from qmp: ' + data)
+    sys.exit(1)

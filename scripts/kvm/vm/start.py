@@ -17,7 +17,7 @@ opts = [
     'qemu-system-x86_64',
     '-nographic',
     '-drive', 'file=' + disk,
-    '-qmp unix:' + monitor + ',server,nowait'
+    '-qmp', 'unix:' + monitor + ',server,nowait'
 ]
 
 if 'acceleration' in params:
