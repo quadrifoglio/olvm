@@ -10,12 +10,14 @@ params = vm['parameters']
 ifaces = vm['interfaces']
 
 folder = '/var/lib/olvm/vms/kvm/' + vm['name']
+monitor = folder + '/monitor.sock'
 disk = folder + '/disk.data'
 
 opts = [
     'qemu-system-x86_64',
     '-nographic',
-    '-drive', 'file=' + disk
+    '-drive', 'file=' + disk,
+    '-qmp unix:' + monitor + ',server,nowait'
 ]
 
 if 'acceleration' in params:

@@ -41,7 +41,7 @@ pub fn list(ctx: &Context, vm: &str) -> Result<Vec<Snapshot>> {
  */
 pub fn get(ctx: &Context, vm: &str, name: &str) -> Result<Snapshot> {
     let node = ctx.conf.global.node;
-    let doc = try!(ctx.db.collection("images").find_one(Some(doc!{"name" => name, "vm" => vm, "node" => node}), None));
+    let doc = try!(ctx.db.collection("snapshots").find_one(Some(doc!{"name" => name, "vm" => vm, "node" => node}), None));
 
     if let Some(snap) = doc {
         return Ok(try!(Snapshot::from_bson(snap)));

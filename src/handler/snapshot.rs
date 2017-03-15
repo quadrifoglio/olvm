@@ -12,7 +12,7 @@ fn validate(ctx: &Context, obj: &str) -> Result<Snapshot> {
     let mut snap = try!(Snapshot::from_json(obj));
     snap.node = ctx.conf.global.node;
 
-    if let Ok(_) = database::vm::get(ctx, snap.vm.as_str()) {
+    if let Err(_) = database::vm::get(ctx, snap.vm.as_str()) {
         return Err(Error::new("VM not found"));
     }
 
