@@ -37,7 +37,11 @@ fn validate(ctx: &Context, obj: &str) -> Result<VM> {
     }
 
     let mut index = 0;
-    for iface in &vm.interfaces {
+    for iface in &mut vm.interfaces {
+        if iface.mac.len() == 0 {
+            iface.mac = net::rand_mac();
+        }
+
         match database::network::get(ctx, iface.network.as_str()) {
             Ok(net) => {
                 let ifname = net::iface_dev(vm.name.as_str(), index);
@@ -68,15 +72,10 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
 
     // Check interfaces and generate MAC addresses
     for iface in &mut vm.interfaces {
-        if iface.mac.len() == 0 {
-            iface.mac = net::rand_mac();
-        }
-        else {
-            match database::vm::get_mac(ctx, iface.mac.as_str()) {
-                Ok(_) => return Err(Error::new("The specified 'mac' address is not available")),
-                Err(_) => {}
-            };
-        }
+        match database::vm::get_mac(ctx, iface.mac.as_str()) {
+            Ok(_) => return Err(Error::new("The specified 'mac' address is not available")),
+            Err(_) => {}
+        };
     }
 
     // Create the VM
