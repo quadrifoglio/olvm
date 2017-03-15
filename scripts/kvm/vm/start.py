@@ -13,7 +13,7 @@ folder = '/var/lib/olvm/vms/kvm/' + vm['name']
 disk = folder + '/disk.data'
 
 opts = [
-    '/usr/bin/qemu-system-x86_64',
+    'qemu-system-x86_64',
     '-nographic',
     '-drive', 'file=' + disk
 ]
