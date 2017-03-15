@@ -5,6 +5,7 @@
 pub mod image;
 pub mod vm;
 pub mod network;
+pub mod snapshot;
 
 use mongodb::Client;
 use mongodb::db::{Database, ThreadedDatabase};

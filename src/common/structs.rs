@@ -132,6 +132,55 @@ impl VM {
 }
 
 /*
+ * Data structure to represent the recoverable saved state of a VM
+ */
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Snapshot {
+    #[serde(default = "String::new")]
+    pub vm: String, // Name of the VM
+
+    #[serde(default = "default_i32")]
+    pub node: i32,
+
+    #[serde(default = "String::new")]
+    pub name: String // Name of the snapshot
+}
+
+impl Snapshot {
+    pub fn from_json(s: &str) -> Result<Snapshot> {
+        match serde_json::from_str(s) {
+            Ok(snap) => Ok(snap),
+            Err(e) => Err(Error::new(format!("Failed to parse JSON into a Snapshot structure: {}", e)))
+        }
+    }
+
+    pub fn from_bson(doc: Document) -> Result<Snapshot> {
+        match bson::from_bson::<Snapshot>(Bson::Document(doc)) {
+            Ok(snap) => Ok(snap),
+            Err(e) => Err(Error::new(e.description()))
+        }
+    }
+
+    pub fn to_json(&self) -> Result<String> {
+        let json = match serde_json::to_string(self) {
+            Ok(json) => json,
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        Ok(json)
+    }
+
+    pub fn to_bson(&self) -> Result<Document> {
+        let doc = match bson::to_bson(self) {
+            Ok(bson) => try!(bson.as_document().ok_or(Error::new("Invalid document"))).clone(),
+            Err(e) => return Err(Error::new(e.description()))
+        };
+
+        Ok(doc)
+    }
+}
+
+/*
  * Data structure to represent a network
  */
 #[derive(Serialize, Deserialize, Debug, Default)]

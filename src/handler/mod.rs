@@ -5,6 +5,7 @@
 mod image;
 mod vm;
 mod network;
+mod snapshot;
 
 use std::collections::HashMap;
 
@@ -42,6 +43,11 @@ pub fn handle(ctx: &Context, client: &str, cmd: &str, obj: &str) -> Result<Strin
         "getnet" => network::get(ctx, obj),
         "updatenet" => network::update(ctx, obj),
         "delnet" => network::delete(ctx, obj),
+
+        "createsnap" => snapshot::create(ctx, obj),
+        "listsnap" => snapshot::list(ctx, obj),
+        "restoresnap" => snapshot::restore(ctx, obj),
+        "delsnap" => snapshot::delete(ctx, obj),
 
         _ => Err(Error::new("Unknown command"))
     };

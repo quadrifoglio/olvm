@@ -59,7 +59,10 @@ pub struct BackendVM {
     pub start: Option<String>,
     pub stop: Option<String>,
     pub delete: Option<String>,
-    pub status: Option<String>
+    pub status: Option<String>,
+    pub snapshot_create: Option<String>,
+    pub snapshot_restore: Option<String>,
+    pub snapshot_delete: Option<String>
 }
 
 #[derive(Deserialize)]

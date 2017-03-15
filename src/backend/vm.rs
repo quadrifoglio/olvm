@@ -84,3 +84,51 @@ pub fn script_status(ctx: &Context, vm: &mut VM) -> Result<HashMap<String, Strin
 
     Ok(HashMap::new())
 }
+
+pub fn script_snapshot_create(ctx: &Context, vm: &VM, name: &str) -> Result<()> {
+    let backend = try!(ctx.conf.get_backend(vm.backend.as_str()).ok_or(Error::new("Invalid or unknown backend")));
+
+    if let Some(ref path) = backend.vm.snapshot_create {
+        let vm_json = try!(json(ctx, vm));
+        let json = json!({
+            "name": name,
+            "vm": vm_json
+        }).to_string();
+
+        try!(super::script(path, json.as_str()));
+    }
+
+    Ok(())
+}
+
+pub fn script_snapshot_restore(ctx: &Context, vm: &VM, name: &str) -> Result<()> {
+    let backend = try!(ctx.conf.get_backend(vm.backend.as_str()).ok_or(Error::new("Invalid or unknown backend")));
+
+    if let Some(ref path) = backend.vm.snapshot_restore {
+        let vm_json = try!(json(ctx, vm));
+        let json = json!({
+            "name": name,
+            "vm": vm_json
+        }).to_string();
+
+        try!(super::script(path, json.as_str()));
+    }
+
+    Ok(())
+}
+
+pub fn script_snapshot_delete(ctx: &Context, vm: &VM, name: &str) -> Result<()> {
+    let backend = try!(ctx.conf.get_backend(vm.backend.as_str()).ok_or(Error::new("Invalid or unknown backend")));
+
+    if let Some(ref path) = backend.vm.snapshot_delete {
+        let vm_json = try!(json(ctx, vm));
+        let json = json!({
+            "name": name,
+            "vm": vm_json
+        }).to_string();
+
+        try!(super::script(path, json.as_str()));
+    }
+
+    Ok(())
+}
