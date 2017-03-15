@@ -32,9 +32,14 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let vm = try!(database::vm::get(ctx, snap.vm.as_str()));
 
     try!(database::snapshot::create(ctx, &snap));
-    try!(backend::vm::script_snapshot_create(ctx, &vm, snap.name.as_str()));
 
-    Ok(String::new())
+    match backend::vm::script_snapshot_create(ctx, &vm, snap.name.as_str()) {
+        Ok(_) => Ok(String::new()),
+        Err(e) => {
+            let _ = database::snapshot::delete(ctx, snap.vm.as_str(), snap.name.as_str());
+            Err(e)
+        }
+    }
 }
 
 /*

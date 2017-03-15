@@ -13,6 +13,6 @@ disk = folder + '/disk.data'
 
 try:
     subprocess.check_output(["qemu-img", "snapshot", "-d", name, disk])
-except CalledProcessError as e:
-    sys.stderr.write(e)
+except subprocess.CalledProcessError as e:
+    sys.stderr.write(e.output)
     sys.exit(1)
