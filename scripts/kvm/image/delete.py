@@ -6,7 +6,7 @@ import sys
 import shutil
 
 vm = json.loads(sys.argv[1])
-folder = '/var/lib/olvm/vms/kvm/' + vm['name']
+f = '/var/lib/olvm/images/kvm/' + vm['name'] + '.image'
 
-if os.path.isdir(folder):
-    shutil.rmtree(folder)
+if os.path.exists(f):
+    os.remove(f)
