@@ -32,6 +32,8 @@ if 'memory' in params:
     opts.append(params['memory'])
 
 if 'vnc' in params:
+    opts.append('-k')
+    opts.append('fr')
     opts.append('-vnc')
 
     if 'vncws' in params:

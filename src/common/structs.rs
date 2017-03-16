@@ -197,7 +197,10 @@ pub struct Network {
     pub router: String, // DHCP: Exit router
 
     #[serde(default = "Vec::new")]
-    pub dns: Vec<String> // DHCP: List of available nameservers
+    pub dns: Vec<String>, // DHCP: List of available nameservers
+
+    #[serde(default = "String::new")]
+    pub interface: String, // Optional: Gateway interface
 }
 
 impl Network {

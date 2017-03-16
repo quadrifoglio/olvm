@@ -46,6 +46,10 @@ pub fn create(ctx: &Context, obj: &str) -> Result<String> {
     let netname = net::net_dev(net.name.as_str());
     try!(net::system::bridge_create(netname.as_str()));
 
+    if net.interface.len() > 0 {
+        try!(net::system::bridge_addif(net.interface.as_str(), netname.as_str()));
+    }
+
     Ok(String::new())
 }
 
