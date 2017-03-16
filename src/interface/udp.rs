@@ -3,6 +3,7 @@
  */
 
 use std::net::{UdpSocket, SocketAddr};
+use std::sync::Arc;
 use std::process;
 
 use common::{Context, Result, Error};
@@ -43,7 +44,9 @@ fn command(ctx: &Context, socket: &UdpSocket, src: SocketAddr, buf: Vec<u8>) -> 
     Ok(())
 }
 
-pub fn run(ctx: &Context) {
+pub fn run(ctx: Arc<Context>) {
+    let ctx = ctx.as_ref();
+
     // 1024 bytes buffer
     let mut buf = vec![0; 1024];
 

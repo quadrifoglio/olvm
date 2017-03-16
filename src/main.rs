@@ -62,14 +62,16 @@ fn main() {
         };
     });
 
-    // Start the chosen interface, UDP or stdin
+    // Start the chosen interfaces
+    if ctx.conf.http.is_some() {
+        let rctx = ctx.clone();
+        thread::spawn(move || interface::http::run(rctx));
+    }
     if ctx.conf.udp.is_some() {
-        interface::udp::run(&ctx);
+        let rctx = ctx.clone();
+        interface::udp::run(rctx);
     }
-    else if ctx.conf.http.is_some() {
-        interface::http::run(ctx.clone());
-    }
-    else {
+    /*else {
         interface::stdin::run(&ctx);
-    }
+    }*/
 }
