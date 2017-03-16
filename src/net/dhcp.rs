@@ -48,20 +48,29 @@ pub fn listen(ctx: Arc<Context>) -> Result<()> {
 }
 
 fn handle(ctx: Arc<Context>, socket: &UdpSocket, req: Frame) {
-    // Get the VM interface's IP from database to offer it in DHCP response
-    let ip = match database::vm::get_mac(ctx.as_ref(), req.client_mac_string().as_str()) {
-        Ok((vm, index)) => {
-            let iface = vm.interfaces.get(index).unwrap(); // Unwrapping is ok, checked in database::vm::get_mac
-
-            match Ipv4Addr::from_str(iface.ip.as_str()) {
-                Ok(ip) => ip,
-                Err(_) => {
-                    println!("Failed to parse IP: {}", iface.ip);
-                    return;
-                }
-            }
-        },
+    // Get the VM and its interface from database
+    let (vm, index) = match database::vm::get_mac(ctx.as_ref(), req.client_mac_string().as_str()) {
+        Ok((vm, index)) => (vm, index),
         Err(_) => return // Ignore the request if the MAC address is not found
+    };
+
+    let iface = vm.interfaces.get(index).unwrap(); // Unwrapping is ok, checked in database::vm::get_mac
+
+    let net = match database::network::get(ctx.as_ref(), iface.network.as_str()) {
+        Ok(net) => net,
+        Err(e) => {
+            println!("Failed to find network: {}", e);
+            return;
+        }
+    };
+
+    // Get the VM's IP address
+    let ip = match Ipv4Addr::from_str(iface.ip.as_str()) {
+        Ok(ip) => ip,
+        Err(_) => {
+            println!("Failed to parse IP: {}", iface.ip);
+            return;
+        }
     };
 
     // Constructs a new DHCP response
@@ -107,9 +116,40 @@ fn handle(ctx: Arc<Context>, socket: &UdpSocket, req: Frame) {
     resp.add_option(mask);
 
     // Set the router
-    let mut router = Option::new(codes::OPTION_ROUTER);
-    router.set_data_ip(192, 168, 1, 254);
-    resp.add_option(router);
+    match net.router.len() {
+        0 => {},
+        _ => {
+            match Ipv4Addr::from_str(net.router.as_str()) {
+                Ok(ip) => {
+                    let mut router = Option::new(codes::OPTION_ROUTER);
+                    router.set_data(ip.octets().to_vec());
+                    resp.add_option(router);
+                },
+                Err(_) => {
+                    println!("Failed to parse IP: {}", iface.ip);
+                    return;
+                }
+            };
+        }
+    };
+
+    // Set the DNS
+    match net.dns.len() {
+        0 => {},
+        _ => {
+            match Ipv4Addr::from_str(net.dns[0].as_str()) {
+                Ok(ip) => {
+                    let mut router = Option::new(codes::OPTION_DOMAIN_SERVER);
+                    router.set_data(ip.octets().to_vec());
+                    resp.add_option(router);
+                },
+                Err(_) => {
+                    println!("Failed to parse IP: {}", iface.ip);
+                    return;
+                }
+            };
+        }
+    }
 
     // Set the lease time
     let mut lease = Option::new(codes::OPTION_ADDRESS_LEASE_TIME);
