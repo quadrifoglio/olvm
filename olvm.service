@@ -1,0 +1,13 @@
+[Unit]
+Description=Virtualization Server
+After=network.target auditd.service
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/usr/local/bin/olvm /etc/olvm.conf
+Restart=always
+RestartSec=2
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
