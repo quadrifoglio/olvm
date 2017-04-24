@@ -41,6 +41,10 @@ if 'vnc' in params:
     else:
         opts.append(params['vnc'])
 
+if 'cdrom' in params:
+    opts.append('-cdrom')
+    opts.append(params['cdrom'])
+
 if 'args' in params:
     opts.append(params['args'])
 

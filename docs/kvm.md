@@ -48,6 +48,14 @@ Possible values: an integer (display number)
 Available only when the VNC server is listening (see above).
 Choose a WebSocket VNC display number (port).
 
+### CD-ROM
+
+Name: 'cdrom'
+
+Possible values: a string, path to a CD-ROM image (ISO)
+
+Insert the specified CD-ROM ISO image into the VM at startup
+
 ### Custom command line options
 
 Name: 'args'
