@@ -16,7 +16,7 @@ if not os.path.isdir(folder):
 try:
     out = ''
 
-    if 'image' in vm:
+    if 'image' in vm and len(vm['image']) > 0:
         out = subprocess.check_output(['qemu-img', 'create', '-f', 'qcow2', '-b', vm['image']['file'], disk, '15G'])
     else:
         out = subprocess.check_output(['qemu-img', 'create', '-f', 'qcow2', disk, '15G'])
